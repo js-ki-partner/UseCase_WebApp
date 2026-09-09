@@ -38,11 +38,34 @@ und trägt den Wert ein (identisch mit dem Token, das bereits unter
 `/opt/stacks/openproject/secrets.enc.yaml` liegt, oder ein neu erzeugtes
 Token für einen dedizierten API-User — Entscheidung liegt bei Jens).
 
+## Warum `sudo` nötig ist (und wieso hier nichts neu eingerichtet werden muss)
+
+Der private age-Key liegt unter `/etc/sops/age-key.txt`, `root:root`,
+`chmod 600` — der `deploy`-User kann ihn nicht direkt lesen. Auf diesem
+Server existiert dafür bereits eine **user-weite** (nicht app-gebundene)
+Sudoers-Regel:
+
+```
+# /etc/sudoers.d/deploy-sops
+Defaults:deploy env_keep += "SOPS_AGE_KEY_FILE"
+deploy ALL=(root) NOPASSWD: /usr/local/bin/sops
+```
+
+Das wurde beim OpenProject-Deploy einmalig pro Server eingerichtet und gilt
+für **jedes** Stack-Verzeichnis, in dem `deploy` `sops` aufruft — auch für
+diese App. **Claude Code soll hier keine neue Sudoers-Regel anlegen**, nur
+den Aufruf unten aus dem eigenen Stack-Verzeichnis heraus verwenden.
+Voraussetzung ist lediglich, dass die `.sops.yaml` dieser App denselben
+age-Public-Key referenziert wie beim OpenProject-Stack
+(`age1ar2kraf9y4pqffcum36vp8exa92a08kl9zeznjln9p9nltedhqmsh5t8pl`), damit
+derselbe private Key auf dem Server passt.
+
 ## Standard-Ablauf zur Laufzeit (das, was Claude Code ausführt)
 
 ```bash
 cd /opt/stacks/<app-name>
 SOPS_AGE_KEY_FILE=/etc/sops/age-key.txt sudo /usr/local/bin/sops -d --output-type dotenv secrets.enc.yaml > .env
+chmod 600 .env
 docker compose up -d
 ```
 

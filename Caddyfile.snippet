@@ -1,5 +1,9 @@
-# In die vorhandene Caddyfile auf dem VPS aufnehmen (Domain ggf. anpassen).
+# In die Caddyfile des Caddy-Stacks aufnehmen: /opt/stacks/caddy/Caddyfile
+# (Caddy laeuft als Container im Netz proxy-net, wie bei openproject.ki-partner.tech).
 # ideen.ki-partner.tech muss per DNS-A-Record auf den VPS zeigen.
+#
+# Danach neu laden:
+#   docker compose -f /opt/stacks/caddy/docker-compose.yml exec caddy caddy reload --config /etc/caddy/Caddyfile
 ideen.ki-partner.tech {
-	reverse_proxy 127.0.0.1:3005
+	reverse_proxy ucradar:3000
 }

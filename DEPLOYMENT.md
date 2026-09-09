@@ -95,6 +95,12 @@ sops -d --output-type dotenv secrets.enc.yaml > .env
 docker compose up -d
 ```
 
+> Auf diesem Server liegt der age-Key `root:root 600`; der `deploy`-User ruft
+> `sops` über die vorhandene Sudoers-Regel auf:
+> `SOPS_AGE_KEY_FILE=/etc/sops/age-key.txt sudo /usr/local/bin/sops -d --output-type dotenv secrets.enc.yaml > .env`
+> — Details in [OPENPROJECT_ZUGANG.md](OPENPROJECT_ZUGANG.md). Die Skripte in
+> `scripts/` machen das bereits so.
+
 `--output-type dotenv` erzwingen: sonst gibt `sops -d` YAML (`KEY: value`) statt
 `KEY=value` aus und `env_file` liest die Variablen nicht (dieser Fehler ist beim
 OpenProject-Deploy schon einmal passiert — siehe `OPENPROJECT_ZUGANG.md`).

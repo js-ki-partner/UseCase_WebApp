@@ -13,7 +13,9 @@ TARGET="$(cat .deploy-previous-ref)"
 echo "==> Rollback auf $TARGET"
 git reset --hard "$TARGET"
 
-sops -d --output-type dotenv secrets.enc.yaml > .env
+export SOPS_AGE_KEY_FILE="${SOPS_AGE_KEY_FILE:-/etc/sops/age-key.txt}"
+sudo /usr/local/bin/sops -d --output-type dotenv secrets.enc.yaml > .env
+chmod 600 .env
 docker compose -f docker-compose.prod.yml up -d --build
 
 sleep 5

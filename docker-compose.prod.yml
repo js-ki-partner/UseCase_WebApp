@@ -15,11 +15,16 @@ services:
     env_file:
       - .env
     ports:
-      - "127.0.0.1:3005:3000" # nur lokal; Caddy terminiert TLS und proxyt hierher
+      - "127.0.0.1:3005:3000" # nur lokal fuer Healthcheck/Debug; Traffic laeuft ueber proxy-net
     volumes:
       - ./openproject-mapping.json:/app/openproject-mapping.json:ro
     depends_on:
       - db
+    networks:
+      default: {}
+      proxy-net:
+        aliases:
+          - ucradar # Caddy proxyt auf diesen Namen (siehe Caddyfile.snippet)
 
   db:
     image: postgres:16-alpine
@@ -35,6 +40,10 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+
+networks:
+  proxy-net:
+    external: true # von der Caddy-Stack angelegt, geteilt mit OpenProject
 
 volumes:
   ucradar-db-data:

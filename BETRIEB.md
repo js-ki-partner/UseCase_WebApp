@@ -8,22 +8,34 @@ verbindliche SOPS-/age-Prinzip). Stack-Verzeichnis auf dem VPS:
 
 | Komponente | Beschreibung |
 |---|---|
-| `app` | Next.js-Anwendungscontainer (`npm run start`), intern `:3000`, gemappt auf `127.0.0.1:3005` |
-| `db` | PostgreSQL 16 |
-| Caddy | vorhandener Reverse Proxy, terminiert TLS, proxyt auf `127.0.0.1:3005` |
+| `app` | Next.js-Anwendungscontainer (`npm run start`), intern `:3000`, Netz-Alias `ucradar` im Netz `proxy-net`; `127.0.0.1:3005` nur fuer Healthcheck/Debug |
+| `db` | PostgreSQL 16, nur im internen `default`-Netz |
+| Caddy | eigener Container-Stack unter `/opt/stacks/caddy/`, im Netz `proxy-net`, terminiert TLS, proxyt auf `ucradar:3000` |
 
-Caddyfile-Eintrag:
+Caddyfile-Eintrag (`/opt/stacks/caddy/Caddyfile`, Vorlage: [Caddyfile.snippet](Caddyfile.snippet)):
 
 ```
 ideen.ki-partner.tech {
-    reverse_proxy 127.0.0.1:3005
+    reverse_proxy ucradar:3000
 }
+```
+
+Neu laden nach der Aenderung:
+
+```bash
+docker compose -f /opt/stacks/caddy/docker-compose.yml exec caddy \
+  caddy reload --config /etc/caddy/Caddyfile
 ```
 
 ## Secrets (`secrets.enc.yaml`)
 
-Vorlage: [secrets.example.yaml](secrets.example.yaml). Eintragen über
-`sops secrets.enc.yaml` auf dem Server.
+Vorlage: [secrets.example.yaml](secrets.example.yaml). Der `deploy`-User kann
+den age-Key nur über `sudo` lesen (siehe [OPENPROJECT_ZUGANG.md](OPENPROJECT_ZUGANG.md)),
+daher immer:
+
+```bash
+SOPS_AGE_KEY_FILE=/etc/sops/age-key.txt sudo /usr/local/bin/sops secrets.enc.yaml
+```
 
 | Schlüssel | Zweck |
 |---|---|
@@ -42,8 +54,10 @@ Repo — bei Strukturänderungen in OpenProject abgleichen.
 
 ## Erstinbetriebnahme
 
-Voraussetzung: age-Key auf dem Server (`/etc/sops/age-key.txt`, siehe
-DEPLOYMENT.md „Einmalige Einrichtung pro Server").
+Voraussetzungen (beim OpenProject-Deploy bereits erledigt): age-Key auf dem
+Server (`/etc/sops/age-key.txt`), Sudoers-Regel für `deploy` + `sops`
+(siehe [OPENPROJECT_ZUGANG.md](OPENPROJECT_ZUGANG.md)), Docker-Netz `proxy-net`
+läuft (Caddy-Stack).
 
 ```bash
 sudo mkdir -p /opt/stacks/ucradar && sudo chown "$USER" /opt/stacks/ucradar
@@ -52,11 +66,11 @@ git clone https://github.com/js-ki-partner/UseCase_WebApp.git .
 ./scripts/first-deploy.sh
 ```
 
-`first-deploy.sh` erzeugt `.sops.yaml` und `secrets.enc.yaml` (Zufallswerte für
-`SESSION_SECRET`, `TOKEN_HASH_SECRET`, `JOB_TOKEN`, `POSTGRES_PASSWORD` werden
-generiert), öffnet `sops` für die beiden Werte, die du selbst einträgst
-(`OP_API_KEY`, `SMTP_URL`), baut, migriert und startet. Der Entrypoint führt
-`prisma migrate deploy` aus.
+`first-deploy.sh` erzeugt `.sops.yaml` (mit dem bekannten age-Public-Key des
+Servers) und `secrets.enc.yaml` (Zufallswerte für `SESSION_SECRET`,
+`TOKEN_HASH_SECRET`, `JOB_TOKEN`, `POSTGRES_PASSWORD` werden generiert), öffnet
+`sops` für die beiden Werte, die du selbst einträgst (`OP_API_KEY`, `SMTP_URL`),
+baut, migriert und startet. Der Entrypoint führt `prisma migrate deploy` aus.
 
 Danach:
 
@@ -67,8 +81,10 @@ docker compose -f docker-compose.prod.yml exec \
   -e ADMIN_EMAIL=jens.schmidt@ki-partner.tech -e "ADMIN_NAME=Jens Schmidt" \
   app npm run db:admin
 
-# 2. Caddy: Inhalt von Caddyfile.snippet in die Caddyfile aufnehmen
-systemctl reload caddy
+# 2. Caddy: Block aus Caddyfile.snippet in /opt/stacks/caddy/Caddyfile aufnehmen,
+#    dann neu laden:
+docker compose -f /opt/stacks/caddy/docker-compose.yml exec caddy \
+  caddy reload --config /etc/caddy/Caddyfile
 ```
 
 DNS: A-Record `ideen.ki-partner.tech` → VPS-IP.

@@ -12,8 +12,11 @@ git reset --hard origin/main
 echo "$PREV" > .deploy-previous-ref
 
 echo "==> Secrets entschluesseln (SOPS + age)"
+# deploy darf den age-Key nur ueber sudo lesen (siehe OPENPROJECT_ZUGANG.md).
 # --output-type dotenv erzwingen, sonst KEY: value statt KEY=value (siehe DEPLOYMENT.md)
-sops -d --output-type dotenv secrets.enc.yaml > .env
+export SOPS_AGE_KEY_FILE="${SOPS_AGE_KEY_FILE:-/etc/sops/age-key.txt}"
+sudo /usr/local/bin/sops -d --output-type dotenv secrets.enc.yaml > .env
+chmod 600 .env
 
 echo "==> Mapping-Datei pruefen"
 test -f openproject-mapping.json || { echo "openproject-mapping.json fehlt"; exit 1; }
