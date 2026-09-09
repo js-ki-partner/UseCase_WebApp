@@ -1,0 +1,77 @@
+{
+  "base_url": "https://openproject.ki-partner.tech",
+  "type_use_case_id": 8,
+  "status_ids": {
+    "eingereicht": 15,
+    "geprueft": 16,
+    "qualifiziert": 17,
+    "priorisiert": 18,
+    "in_umsetzung": 19,
+    "umgesetzt": 20,
+    "verworfen": 21
+  },
+  "custom_fields": {
+    "uc_uuid": "customField1",
+    "einreicher": "customField2",
+    "rolle": "customField3",
+    "frequenz": "customField4",
+    "dauer_min": "customField5",
+    "anzahl_betroffene": "customField6",
+    "stundenpotenzial": "customField7",
+    "reifegrad": "customField8",
+    "wert_min": "customField9",
+    "wert_real": "customField10",
+    "wert_max": "customField11",
+    "konfidenz": "customField12",
+    "datenlage": "customField13",
+    "fehlerkosten": "customField14",
+    "betroffene_systeme": "customField15",
+    "ki_geprueft": "customField16",
+    "ki_einwilligung": "customField17"
+  },
+  "custom_options": {
+    "frequenz": {
+      "täglich": 1,
+      "mehrmals wöchentlich": 2,
+      "wöchentlich": 3,
+      "monatlich": 4,
+      "seltener": 5
+    },
+    "reifegrad": {
+      "Kurzerfassung": 6,
+      "Prozess erfasst": 7,
+      "Bewertet": 8
+    },
+    "konfidenz": {
+      "niedrig": 9,
+      "mittel": 10,
+      "hoch": 11
+    },
+    "datenlage": {
+      "vorhanden strukturiert": 12,
+      "vorhanden unstrukturiert": 13,
+      "teilweise": 14,
+      "nicht vorhanden": 15
+    },
+    "fehlerkosten": {
+      "gering": 16,
+      "mittel": 17,
+      "hoch/kritisch": 18
+    },
+    "ki_einwilligung": {
+      "nicht erteilt": 19,
+      "erteilt": 20,
+      "widerrufen": 21
+    }
+  },
+  "template_project": {
+    "id": 3,
+    "identifier": "use-case-vorlage"
+  },
+  "projects": {
+    "ValuePropDemo": {
+      "id": 4,
+      "identifier": "uc-valuepropdemo"
+    }
+  }
+}

@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f7f6;
+  --foreground: #1a1a1a;
+  --accent: #1d4ed8;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, Arial, sans-serif;
+}
+
+/* Akzentfarbe je Kunde (Branding) wird per inline style auf einem Wrapper gesetzt. */
+.accent-bg {
+  background: var(--accent);
+}
+.accent-text {
+  color: var(--accent);
+}
+.accent-border {
+  border-color: var(--accent);
+}

@@ -1,0 +1,38 @@
+# Produktions-Compose fuer den IONOS-VPS. Laeuft neben OpenProject hinter
+# demselben Caddy-Reverse-Proxy (Konzept Abschnitt 8).
+#
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Secrets kommen aus .env.prod (SOPS+age entschluesselt, siehe DEPLOYMENT.md).
+services:
+  app:
+    build:
+      context: .
+    image: ucradar:latest
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    ports:
+      - "127.0.0.1:3005:3000" # nur lokal; Caddy terminiert TLS und proxyt hierher
+    volumes:
+      - ./openproject-mapping.json:/app/openproject-mapping.json:ro
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ucradar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD fehlt}
+      POSTGRES_DB: ${POSTGRES_DB:-ucradar}
+    volumes:
+      - ucradar-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ucradar}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  ucradar-db-data:

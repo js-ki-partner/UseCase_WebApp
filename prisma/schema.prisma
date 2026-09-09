@@ -1,0 +1,233 @@
+// UC-Radar Datenmodell — siehe konzept-use-case-erfassungg.md Abschnitt 6.
+// Ausbaustufe 1 bespielt aktiv: Tenant, UseCase, AdminUser, MagicLink.
+// ProcessStep, Assessment, AiEnrichment, AiTransferLog sind angelegt, aber noch ungenutzt (Stufe 2).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Frequenz {
+  TAEGLICH
+  MEHRMALS_WOECHENTLICH
+  WOECHENTLICH
+  MONATLICH
+  SELTENER
+}
+
+enum Reifegrad {
+  KURZ // Stufe 1 abgeschlossen
+  PROZESS // Stufe 2 (Prozessschritte) erfasst
+  BEWERTET // Stufe 3 (Bewertung) abgeschlossen
+}
+
+enum UseCaseStatus {
+  ENTWURF
+  EINGEREICHT
+  IN_PRUEFUNG
+  UEBERTRAGEN
+  WARTELISTE
+  ABGELEHNT
+  DUPLIKAT
+}
+
+enum SyncStatus {
+  NICHT_SYNCHRONISIERT
+  OK
+  FEHLER
+}
+
+model Tenant {
+  id                   String   @id @default(cuid())
+  slug                 String   @unique
+  name                 String
+  openprojectProjectId String?
+  accessTokenHash      String? // HMAC-SHA256 des aktuell gueltigen Zugangstokens
+  tokenExpiresAt       DateTime?
+  brandingLogoUrl      String?
+  brandingAccentColor  String? // Hex, z. B. #1d4ed8
+  stundensatzDefault   Int      @default(80) // EUR pro Stunde
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  useCases UseCase[]
+  aiLogs   AiTransferLog[]
+
+  @@map("tenant")
+}
+
+model UseCase {
+  id       String @id @default(cuid())
+  uuid     String @unique @default(uuid()) // Idempotenzanker Richtung OpenProject
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Stufe 1
+  titel              String?
+  problemText        String
+  wunschergebnis     String?
+  rolle              String
+  anzahlBetroffene   Int
+  frequenz           Frequenz
+  dauerMinuten       Int
+  stundenpotenzialPa Int // berechnet, gerundete Stunden pro Jahr
+
+  reifegrad Reifegrad     @default(KURZ)
+  status    UseCaseStatus @default(EINGEREICHT)
+
+  // Einreicher
+  einreicherName  String?
+  einreicherEmail String?
+  istAnonym       Boolean @default(false)
+
+  // KI-Einwilligung (in Stufe 1 immer false; Felder fuer Stufe 2 vorbereitet)
+  kiEinwilligung           Boolean   @default(false)
+  kiEinwilligungAm         DateTime?
+  kiHinweisVersion         String?
+  kiEinwilligungWiderrufenAm DateTime?
+
+  // OpenProject
+  openprojectWpId          Int?
+  openprojectLockVersion   Int?
+  syncStatus               SyncStatus @default(NICHT_SYNCHRONISIERT)
+  syncFehler               String?
+  syncedAt                 DateTime?
+  // aus OpenProject zurückgelesen (nur lesen, Konzept 4.7/7)
+  openprojectStatusKey     String? // interner Schlüssel aus status_ids, z. B. "geprueft"
+  openprojectStatusName    String? // Anzeigename aus OpenProject
+  openprojectStatusAt      DateTime?
+
+  // Zusammenfuehrung
+  duplikatVonId String?
+  duplikatVon   UseCase?  @relation("Duplikate", fields: [duplikatVonId], references: [id], onDelete: SetNull)
+  duplikate     UseCase[] @relation("Duplikate")
+
+  notizIntern String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  processSteps ProcessStep[]
+  assessment   Assessment?
+  aiEnrichment AiEnrichment?
+  aiLogs       AiTransferLog[]
+  magicLinks   MagicLink[]
+
+  @@index([tenantId, status])
+  @@map("use_case")
+}
+
+model ProcessStep {
+  id               String  @id @default(cuid())
+  useCaseId        String
+  useCase          UseCase @relation(fields: [useCaseId], references: [id], onDelete: Cascade)
+  position         Int
+  bezeichnung      String
+  input            String?
+  output           String?
+  system           String?
+  dauerMinuten     Int?
+  hatWartezeit     Boolean @default(false)
+  brauchtEntscheidung Boolean @default(false)
+
+  @@unique([useCaseId, position])
+  @@map("process_step")
+}
+
+model Assessment {
+  id             String   @id @default(cuid())
+  useCaseId      String   @unique
+  useCase        UseCase  @relation(fields: [useCaseId], references: [id], onDelete: Cascade)
+  wertMin        Int?
+  wertReal       Int?
+  wertMax        Int?
+  konfidenz      String?
+  datenlage      String?
+  fehlerkosten   String?
+  koKriterien    Json?
+  ownerBeimKunden String?
+  notizIntern    String?
+  bewertetVon    String?
+  bewertetAm     DateTime?
+
+  @@map("assessment")
+}
+
+model AiEnrichment {
+  id                String   @id @default(cuid())
+  useCaseId         String   @unique
+  useCase           UseCase  @relation(fields: [useCaseId], references: [id], onDelete: Cascade)
+  titelVorschlag    String?
+  kategorie         String?
+  extrahierteSysteme Json?
+  aehnlicheUseCases Json?
+  anbieter          String?
+  modell            String?
+  verarbeitungLokal Boolean  @default(true)
+  erzeugtAm         DateTime @default(now())
+  geprueft          Boolean  @default(false)
+
+  @@map("ai_enrichment")
+}
+
+model AiTransferLog {
+  id                String   @id @default(cuid())
+  useCaseId         String
+  useCase           UseCase  @relation(fields: [useCaseId], references: [id], onDelete: Cascade)
+  tenantId          String
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  anbieter          String
+  modell            String
+  uebermittelteFelder Json // nur Feldnamen, keine Inhalte
+  hinweisVersion    String
+  gesendetAm        DateTime @default(now())
+  ergebnis          String // "ok" | "fehler"
+
+  @@map("ai_transfer_log")
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwortHash String
+  totpSecret   String? // base32; null => 2FA-Einrichtung ausstehend
+  totpAktiv    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  lastLoginAt  DateTime?
+
+  @@map("admin_user")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  actor      String // "admin:<id>", "einreicher", "system"
+  aktion     String // z. B. "use_case.eingereicht", "tenant.token_rotiert", "openproject.sync"
+  zielTyp    String? // "use_case", "tenant", ...
+  zielId     String?
+  tenantId   String?
+  ip         String?
+  detail     Json?
+
+  @@index([tenantId, createdAt])
+  @@index([zielTyp, zielId])
+  @@map("audit_log")
+}
+
+model MagicLink {
+  id         String   @id @default(cuid())
+  tokenHash  String   @unique
+  useCaseId  String
+  useCase    UseCase  @relation(fields: [useCaseId], references: [id], onDelete: Cascade)
+  email      String
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime @default(now())
+
+  @@map("magic_link")
+}
