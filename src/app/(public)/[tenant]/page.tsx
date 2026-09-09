@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { requireTenant } from "@/lib/tenant";
 import { EinreicherChrome } from "@/components/EinreicherChrome";
+import { kiKonfiguriert } from "@/lib/ki";
 import { KurzerfassungForm } from "./KurzerfassungForm";
 import { submitKurzerfassung, type FormState } from "./actions";
 
@@ -34,7 +35,11 @@ export default async function TenantPage({
         </p>
       </header>
 
-      <KurzerfassungForm action={action} modus="neu" />
+      <KurzerfassungForm
+        action={action}
+        modus="neu"
+        kiVerfuegbar={kiKonfiguriert()}
+      />
     </EinreicherChrome>
   );
 }

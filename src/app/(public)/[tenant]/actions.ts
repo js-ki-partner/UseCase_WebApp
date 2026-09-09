@@ -10,6 +10,20 @@ import { sendeMagicLink } from "@/lib/magic-link";
 import { prisma } from "@/lib/prisma";
 import { audit, clientIp } from "@/lib/audit";
 import { bereinigeRateLimitStore, rateLimit } from "@/lib/rate-limit";
+import { KI_HINWEIS_VERSION, kiKonfiguriert } from "@/lib/ki";
+import { starteAnreicherung } from "@/lib/ki-enrichment";
+
+/**
+ * Prüft die vom Client gemeldete KI-Einwilligung serverseitig (Konzept 4.6):
+ * nur gültig bei passender Hinweis-Version UND konfiguriertem Anbieter.
+ */
+function pruefeEinwilligung(formData: FormData): boolean {
+  return (
+    formData.get("kiEinwilligung") === "on" &&
+    formData.get("kiHinweisVersion") === KI_HINWEIS_VERSION &&
+    kiKonfiguriert()
+  );
+}
 
 export interface FormState {
   ok: boolean;
@@ -76,6 +90,8 @@ export async function submitKurzerfassung(
     return { ok: false, fehler: "Die Angaben zu Häufigkeit, Dauer und Anzahl ergeben kein plausibles Potenzial." };
   }
 
+  const kiEinwilligung = pruefeEinwilligung(formData);
+
   const useCase = await tenantDb(ctx.id).useCase.create({
     problemText: d.problemText,
     wunschergebnis: d.wunschergebnis ?? null,
@@ -89,7 +105,16 @@ export async function submitKurzerfassung(
     einreicherName: d.einreicherName ?? null,
     einreicherEmail: d.einreicherEmail ?? null,
     istAnonym: d.istAnonym ?? false,
+    kiEinwilligung,
+    kiEinwilligungAm: kiEinwilligung ? new Date() : null,
+    kiHinweisVersion: kiEinwilligung ? KI_HINWEIS_VERSION : null,
   });
+
+  if (kiEinwilligung) {
+    await starteAnreicherung(useCase.id, ctx.id).catch((e) =>
+      console.error("KI-Anreicherung konnte nicht gestartet werden:", e),
+    );
+  }
 
   if (d.einreicherEmail && !d.istAnonym) {
     try {
@@ -155,6 +180,12 @@ export async function ergaenzeKurzerfassung(
     return { ok: false, fehler: "Die Angaben ergeben kein plausibles Potenzial." };
   }
 
+  // KI-Einwilligung kann beim Ergänzen erstmals erteilt werden (nicht widerrufen).
+  const neuEinwilligung =
+    !bestehend.kiEinwilligung &&
+    !bestehend.kiEinwilligungWiderrufenAm &&
+    pruefeEinwilligung(formData);
+
   await prisma.useCase.update({
     where: { id: useCaseId },
     data: {
@@ -168,10 +199,41 @@ export async function ergaenzeKurzerfassung(
       einreicherName: d.einreicherName ?? null,
       einreicherEmail: d.einreicherEmail ?? bestehend.einreicherEmail,
       istAnonym: d.istAnonym ?? false,
+      ...(neuEinwilligung
+        ? {
+            kiEinwilligung: true,
+            kiEinwilligungAm: new Date(),
+            kiHinweisVersion: KI_HINWEIS_VERSION,
+          }
+        : {}),
     },
   });
+
+  if (neuEinwilligung) {
+    await starteAnreicherung(useCaseId, bestehend.tenantId).catch((e) =>
+      console.error("KI-Anreicherung konnte nicht gestartet werden:", e),
+    );
+  }
 
   redirect(
     `/${slug}/danke?h=${potenzial.stundenpotenzialPa}&ergaenzt=1&uc=${useCaseId}`,
   );
+}
+
+/** KI-Aufbereitung widerrufen (Konzept 4.6). Erreichbar über den Magic Link. */
+export async function widerrufeKiEinwilligung(
+  useCaseId: string,
+  slug: string,
+): Promise<void> {
+  const ctx = await resolveTenant(slug);
+  if (!ctx) return;
+  const uc = await prisma.useCase.findUnique({
+    where: { id: useCaseId },
+    select: { tenantId: true },
+  });
+  if (!uc || uc.tenantId !== ctx.id) return;
+
+  const { widerrufeEinwilligung } = await import("@/lib/ki-enrichment");
+  await widerrufeEinwilligung(useCaseId, "einreicher");
+  redirect(`/${slug}/bearbeiten/${useCaseId}?ki=widerrufen`);
 }

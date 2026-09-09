@@ -177,14 +177,15 @@ Zentrale Zugriffsschicht: **jede** DB-Abfrage im Einreicher-Kontext geht durch e
 - [x] S11.5 Sync CF9–CF14 nach OpenProject — real an WP #45 verifiziert (wert_min/real/max als Zahl, konfidenz/datenlage/fehlerkosten als custom_option-Link).
 - [x] S11.6 Eingangskorb: Spalte „Wert real".
 
-### Phase 12 — KI-Anreicherung + Einwilligung (Konzept 4.6) — offen
+### Phase 12 — KI-Anreicherung + Einwilligung (Konzept 4.6)
 
-- [ ] S12.1 Zweistufige Einwilligung (Schalter + Bestätigungsdialog), Versionskennung des Hinweistextes.
-- [ ] S12.2 Serverseitige Filterschicht (Identitätsfelder entfernen), Warteschlange mit erneuter Einwilligungsprüfung.
-- [ ] S12.3 `AiTransferLog` befüllen (Anbieter, Modell, Feldliste, ohne Inhalt).
-- [ ] S12.4 LLM-Aufruf: Titelvorschlag, Strukturierung, Kategorisierung (EU-Endpunkt, AV-Vertrag, keine Trainingsnutzung).
-- [ ] S12.5 Ähnlichkeitsprüfung über lokales Embedding-Modell auf dem VPS (unabhängig von der Einwilligung).
-- [ ] S12.6 Widerruf löscht Anreicherungen, Einreichung bleibt.
+- [x] S12.1 Zweistufige Einwilligung: `KiEinwilligungSchalter` (Schalter = Stufe A, Dialog = Stufe B mit Wortlaut aus 4.6), Absenden-Button zeigt den Zustand. `KI_HINWEIS_VERSION` als Versionskennung; serverseitig geprüft (`pruefeEinwilligung`), Speicherung mit Zeitstempel + Version.
+- [x] S12.2 Filterschicht `filtereNutzlast()` — nur freigegebene Felder, keine Identitätsfelder (unit-getestet). `verarbeiteAnreicherung` prüft die Einwilligung vor jeder Ausführung erneut; Status WARTEND/OK/FEHLER/UEBERSPRUNGEN; Job `/api/jobs/ki-enrichment` holt Wartende nach.
+- [x] S12.3 `AiTransferLog` — Anbieter, Modell, Feldnamen-Liste, Hinweis-Version, Ergebnis; ohne Inhalt.
+- [x] S12.4 Anbieter-Abstraktion `getKiProvider()` — `KI_PROVIDER` = `""` (aus) / `mock` (Tests) / `openai-compatible` (EU-Endpunkt via `KI_BASE_URL`/`KI_API_KEY`). Ergebnis: Titelvorschlag, Kategorisierung (festes Schema), erkannte Systeme. Konkreter Produktivanbieter noch zu wählen (AV-Vertrag, keine Trainingsnutzung).
+- [x] S12.5 Ähnlichkeitsprüfung `findeAehnliche()` — läuft rein lokal (Token-Jaccard), unabhängig von der Einwilligung; im Admin-Panel als „drei Kolleginnen haben etwas Ähnliches gemeldet". Später durch lokales Embedding-Modell ersetzbar.
+- [x] S12.6 Widerruf `widerrufeEinwilligung()` — löscht `AiEnrichment`, setzt `kiEinwilligungWiderrufenAm`, Einreichung + `AiTransferLog` bleiben. Button auf der Magic-Link-Seite.
+- [x] S12.7 Admin-Review-Panel: Titelvorschlag übernehmen / als geprüft markieren (`geprueft`-Flag) / neu verarbeiten; zeigt Einwilligungsstatus, Anbieter, Ähnliche.
 
 ### Phase 13 — Portfolio-Export (Konzept 10)
 

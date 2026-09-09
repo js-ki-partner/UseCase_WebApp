@@ -7,6 +7,7 @@ import {
   formatiereStundenpotenzial,
   type Frequenz,
 } from "@/lib/potential";
+import { KiEinwilligungSchalter } from "./KiEinwilligungSchalter";
 import type { FormState } from "./actions";
 
 const FREQUENZ_OPTIONEN: { wert: Frequenz; label: string }[] = [
@@ -36,7 +37,7 @@ function Fehler({ text }: { text?: string }) {
   return <p className="mt-1 text-sm text-red-700">{text}</p>;
 }
 
-function AbsendenButton() {
+function AbsendenButton({ kiAktiv }: { kiAktiv: boolean }) {
   const { pending } = useFormStatus();
   return (
     <button
@@ -44,7 +45,11 @@ function AbsendenButton() {
       disabled={pending}
       className="accent-bg rounded-md px-5 py-2.5 font-medium text-white disabled:opacity-60"
     >
-      {pending ? "Wird gesendet …" : "Absenden (ohne KI)"}
+      {pending
+        ? "Wird gesendet …"
+        : kiAktiv
+          ? "Absenden (mit KI-Aufbereitung)"
+          : "Absenden (ohne KI)"}
     </button>
   );
 }
@@ -53,10 +58,12 @@ export function KurzerfassungForm({
   action,
   defaults = {},
   modus = "neu",
+  kiVerfuegbar = false,
 }: {
   action: (prev: FormState, formData: FormData) => Promise<FormState>;
   defaults?: Defaults;
   modus?: "neu" | "ergaenzen";
+  kiVerfuegbar?: boolean;
 }) {
   const [state, formAction] = useActionState(action, { ok: false });
   const ff = state.feldFehler ?? {};
@@ -65,6 +72,8 @@ export function KurzerfassungForm({
   const [anzahl, setAnzahl] = useState(String(defaults.anzahlBetroffene ?? ""));
   const [dauer, setDauer] = useState(String(defaults.dauerMinuten ?? ""));
   const [anonym, setAnonym] = useState(Boolean(defaults.istAnonym));
+  const [kiAktiv, setKiAktiv] = useState(false);
+  const [kiDialogOffen, setKiDialogOffen] = useState(false);
 
   const potenzial = useMemo(() => {
     const a = Number(anzahl);
@@ -274,20 +283,17 @@ export function KurzerfassungForm({
         )}
       </fieldset>
 
-      {/* KI-Schalter — in Ausbaustufe 1 bewusst deaktiviert (Konzept Abschnitt 4.6) */}
-      <div className="rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-500">
-        <label className="flex items-center gap-2">
-          <input type="checkbox" disabled />
-          Meine Eingaben durch KI aufbereiten lassen
-        </label>
-        <p className="mt-1">
-          In der aktuellen Ausbaustufe nicht verfügbar. Ihr Use Case wird
-          ausschließlich auf dem Server von KI&nbsp;Partner verarbeitet.
-        </p>
-      </div>
+      {/* KI-Einwilligung, zweistufig (Konzept Abschnitt 4.6) */}
+      <KiEinwilligungSchalter
+        aktiv={kiAktiv}
+        onChange={setKiAktiv}
+        dialogOffen={kiDialogOffen}
+        setDialogOffen={setKiDialogOffen}
+        verfuegbar={kiVerfuegbar}
+      />
 
       <div className="flex items-center gap-4">
-        <AbsendenButton />
+        <AbsendenButton kiAktiv={kiAktiv} />
         {modus === "neu" && (
           <span className="text-sm text-gray-500">
             Details (Prozessschritte) können Sie später ergänzen.

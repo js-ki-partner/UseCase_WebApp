@@ -11,11 +11,13 @@ import {
 import { berechnePotenzial, type Frequenz } from "@/lib/potential";
 import { kundenFortschritt } from "@/lib/openproject";
 import { berechneWertkorridor, type KoKriterien } from "@/lib/bewertung";
+import { einwilligungsStatus } from "@/lib/openproject";
 import { env } from "@/lib/env";
 import { EditForm } from "./EditForm";
 import { OpenProjectAktionen } from "./OpenProjectAktionen";
 import { DuplikatForm } from "./DuplikatForm";
 import { BewertungForm } from "./BewertungForm";
+import { KiAnreicherungPanel } from "./KiAnreicherungPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +34,7 @@ export default async function UcDetailPage({ params }: PageProps<"/admin/uc/[id]
       duplikate: true,
       magicLinks: true,
       assessment: true,
+      aiEnrichment: true,
     },
   });
   if (!uc) notFound();
@@ -147,6 +150,37 @@ export default async function UcDetailPage({ params }: PageProps<"/admin/uc/[id]
                 </tbody>
               </table>
             </div>
+          </section>
+        )}
+
+        {uc.aiEnrichment && (
+          <section className="mt-8 rounded-md border border-gray-200 bg-white p-4">
+            <h2 className="mb-3 font-medium">KI-Anreicherung</h2>
+            <KiAnreicherungPanel
+              useCaseId={uc.id}
+              status={uc.aiEnrichment.status}
+              fehler={uc.aiEnrichment.fehler}
+              titelVorschlag={uc.aiEnrichment.titelVorschlag}
+              kategorie={uc.aiEnrichment.kategorie}
+              extrahierteSysteme={
+                Array.isArray(uc.aiEnrichment.extrahierteSysteme)
+                  ? (uc.aiEnrichment.extrahierteSysteme as string[])
+                  : []
+              }
+              aehnliche={
+                Array.isArray(uc.aiEnrichment.aehnlicheUseCases)
+                  ? (uc.aiEnrichment.aehnlicheUseCases as {
+                      useCaseId: string;
+                      titel: string;
+                      score: number;
+                    }[])
+                  : []
+              }
+              anbieter={uc.aiEnrichment.anbieter}
+              modell={uc.aiEnrichment.modell}
+              geprueft={uc.aiEnrichment.geprueft}
+              einwilligung={einwilligungsStatus(uc)}
+            />
           </section>
         )}
 

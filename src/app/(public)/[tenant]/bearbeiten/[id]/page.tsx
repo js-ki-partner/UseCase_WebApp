@@ -5,8 +5,13 @@ import { requireTenant } from "@/lib/tenant";
 import { EinreicherChrome } from "@/components/EinreicherChrome";
 import { kundenFortschritt } from "@/lib/openproject";
 import { formatEuro } from "@/lib/bewertung";
+import { kiKonfiguriert } from "@/lib/ki";
 import { KurzerfassungForm } from "../../KurzerfassungForm";
-import { ergaenzeKurzerfassung, type FormState } from "../../actions";
+import {
+  ergaenzeKurzerfassung,
+  widerrufeKiEinwilligung,
+  type FormState,
+} from "../../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -21,9 +26,14 @@ export default async function BearbeitenPage({
     include: {
       _count: { select: { processSteps: true } },
       assessment: { select: { wertReal: true } },
+      aiEnrichment: { select: { status: true } },
     },
   });
   if (!useCase || useCase.tenantId !== ctx.id) notFound();
+
+  const kiAktiv =
+    useCase.kiEinwilligung && !useCase.kiEinwilligungWiderrufenAm;
+  const kiWiderruf = widerrufeKiEinwilligung.bind(null, useCase.id, slug);
 
   const zeigtWert =
     ctx.zeigtBewertung &&
@@ -69,6 +79,7 @@ export default async function BearbeitenPage({
       <KurzerfassungForm
         action={action}
         modus="ergaenzen"
+        kiVerfuegbar={kiKonfiguriert()}
         defaults={{
           problemText: useCase.problemText,
           rolle: useCase.rolle,
@@ -99,6 +110,34 @@ export default async function BearbeitenPage({
           →
         </Link>
       </div>
+
+      {(kiAktiv || useCase.kiEinwilligungWiderrufenAm) && (
+        <div className="mt-6 rounded-md border border-gray-200 bg-white p-4">
+          <h2 className="font-medium">KI-Aufbereitung</h2>
+          {kiAktiv ? (
+            <>
+              <p className="mt-1 text-sm text-gray-600">
+                Aktiv
+                {useCase.aiEnrichment?.status === "OK"
+                  ? " — Aufbereitung liegt vor."
+                  : useCase.aiEnrichment?.status === "FEHLER"
+                    ? " — Aufbereitung fehlgeschlagen, wird erneut versucht."
+                    : " — Aufbereitung läuft."}
+              </p>
+              <form action={kiWiderruf} className="mt-2">
+                <button className="text-sm text-red-700 underline">
+                  KI-Aufbereitung widerrufen
+                </button>
+              </form>
+            </>
+          ) : (
+            <p className="mt-1 text-sm text-gray-600">
+              Widerrufen. Die erzeugten Aufbereitungen wurden gelöscht, Ihre
+              Einreichung bleibt bestehen.
+            </p>
+          )}
+        </div>
+      )}
     </EinreicherChrome>
   );
 }

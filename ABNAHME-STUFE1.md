@@ -52,6 +52,8 @@ Stand: 8. September 2026. `[x]` erfüllt und geprüft · `[~]` erfüllt, Prüfun
 - [x] Realer Sync gegen `openproject.ki-partner.tech` (Projekt „Use Cases – ValuePropDemo"): WP #45/#46 angelegt + idempotent aktualisiert, alle Custom Fields verifiziert.
 - [x] Status-Rücklesen (`/api/jobs/op-status` + Admin-Buttons) und vereinfachte Fortschrittsanzeige beim Kunden auf der Magic-Link-Seite („Eingegangen" / „In Prüfung" / …).
 - [x] Bewertungsblock (Stufe 2): K.-o.-Fragen + Wertkorridor im Admin, `reifegrad = BEWERTET`, Sync CF9–CF14 nach OpenProject, Tenant-Schalter für Kundensichtbarkeit.
+- [x] Portfolio-CSV-Export (`/admin/export/portfolio`, 26 Spalten, Excel/UTF-8-BOM, respektiert Filter).
+- [x] KI-Anreicherung (Stufe 2, Konzept 4.6): zweistufige Einwilligung mit Versionskennung, serverseitige Filterschicht, `AiTransferLog`, Anbieter-Abstraktion (`mock` getestet), lokale Ähnlichkeitsprüfung, Widerruf, Admin-Review-Panel. **Standardmäßig aus** — Produktivanbieter (EU-Endpunkt/AV-Vertrag) noch zu wählen.
 
 ## Mandantentrennung & Betrieb
 

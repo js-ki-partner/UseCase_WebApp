@@ -183,3 +183,77 @@ export async function alleFortschritteAktualisieren(): Promise<UcActionState> {
     hinweis: `${lauf.geprueft} geprüft, ${lauf.geaendert} geändert${lauf.fehler ? `, ${lauf.fehler} Fehler` : ""}.`,
   };
 }
+
+// --- KI-Anreicherung (Konzept 4.6) ---
+
+export async function anreicherungUebernehmen(
+  useCaseId: string,
+): Promise<UcActionState> {
+  const admin = await requireAdmin();
+  const uc = await prisma.useCase.findUnique({
+    where: { id: useCaseId },
+    include: { aiEnrichment: true },
+  });
+  if (!uc?.aiEnrichment) return { fehler: "Keine Anreicherung vorhanden." };
+
+  await prisma.useCase.update({
+    where: { id: useCaseId },
+    data: {
+      ...(!uc.titel && uc.aiEnrichment.titelVorschlag
+        ? { titel: uc.aiEnrichment.titelVorschlag }
+        : {}),
+    },
+  });
+  await prisma.aiEnrichment.update({
+    where: { useCaseId },
+    data: { geprueft: true },
+  });
+  await audit({
+    actor: `admin:${admin.id}`,
+    aktion: "ki.vorschlag_geprueft",
+    zielTyp: "use_case",
+    zielId: useCaseId,
+    tenantId: uc.tenantId,
+    detail: { uebernommen: true },
+  });
+  revalidatePath(`/admin/uc/${useCaseId}`);
+  return { ok: true, hinweis: "Übernommen und als geprüft markiert." };
+}
+
+export async function anreicherungAlsGeprueft(
+  useCaseId: string,
+): Promise<UcActionState> {
+  const admin = await requireAdmin();
+  const uc = await prisma.useCase.findUnique({
+    where: { id: useCaseId },
+    select: { tenantId: true },
+  });
+  await prisma.aiEnrichment.update({
+    where: { useCaseId },
+    data: { geprueft: true },
+  });
+  await audit({
+    actor: `admin:${admin.id}`,
+    aktion: "ki.vorschlag_geprueft",
+    zielTyp: "use_case",
+    zielId: useCaseId,
+    tenantId: uc?.tenantId,
+    detail: { uebernommen: false },
+  });
+  revalidatePath(`/admin/uc/${useCaseId}`);
+  return { ok: true, hinweis: "Als geprüft markiert." };
+}
+
+export async function anreicherungErneut(
+  useCaseId: string,
+): Promise<UcActionState> {
+  await requireAdmin();
+  const { verarbeiteAnreicherung } = await import("@/lib/ki-enrichment");
+  await prisma.aiEnrichment.updateMany({
+    where: { useCaseId },
+    data: { status: "WARTEND", geprueft: false, fehler: null },
+  });
+  await verarbeiteAnreicherung(useCaseId);
+  revalidatePath(`/admin/uc/${useCaseId}`);
+  return { ok: true, hinweis: "Neu verarbeitet." };
+}

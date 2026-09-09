@@ -164,14 +164,17 @@ model AiEnrichment {
   id                String   @id @default(cuid())
   useCaseId         String   @unique
   useCase           UseCase  @relation(fields: [useCaseId], references: [id], onDelete: Cascade)
+  status            String   @default("WARTEND") // WARTEND | OK | FEHLER | UEBERSPRUNGEN
+  fehler            String?
   titelVorschlag    String?
   kategorie         String?
   extrahierteSysteme Json?
-  aehnlicheUseCases Json?
+  aehnlicheUseCases Json? // immer lokal ermittelt, unabhaengig von der Einwilligung
   anbieter          String?
   modell            String?
   verarbeitungLokal Boolean  @default(true)
   erzeugtAm         DateTime @default(now())
+  verarbeitetAm     DateTime?
   geprueft          Boolean  @default(false)
 
   @@map("ai_enrichment")

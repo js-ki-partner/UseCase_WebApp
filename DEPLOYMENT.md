@@ -76,6 +76,31 @@ der Endpunkt 503 zurück und der Rücklese-Job ist damit deaktiviert.
 Manuell geht es jederzeit über den Button „Fortschritt aus OpenProject
 aktualisieren" im Eingangskorb.
 
+### KI-Anreicherung (optional, Konzept 4.6)
+
+Standardmäßig **aus** (`KI_PROVIDER` leer) — dann findet keinerlei externe
+Verarbeitung statt und der Einwilligungsschalter im Formular ist deaktiviert.
+
+Aktivierung erfordert einen Anbieter mit EU-Endpunkt, Auftragsverarbeitungs­vertrag
+und ausgeschlossener Trainingsnutzung. Dann in `.env.prod`:
+
+```
+KI_PROVIDER="openai-compatible"
+KI_BASE_URL="https://<eu-endpunkt>/v1"
+KI_API_KEY="..."
+KI_MODELL="..."
+KI_ANBIETER_NAMEN="<im Dialog genannter Anbietername>"
+```
+
+Ändern sich Anbieter oder Hinweistext, muss `KI_HINWEIS_VERSION` in
+`src/lib/ki.ts` hochgezählt werden — alte Einwilligungen gelten dann nicht weiter.
+
+Cron für die Nachverarbeitung wartender Aufträge (z. B. alle 5 Minuten):
+
+```
+*/5 * * * * curl -fsS -H "Authorization: Bearer <JOB_TOKEN>" https://ideen.ki-partner.tech/api/jobs/ki-enrichment > /dev/null
+```
+
 ## Datensicherung
 
 - `scripts/backup.sh` schreibt ein gzip-`pg_dump` nach `./backups`, Vorhaltung 7 Tage.
