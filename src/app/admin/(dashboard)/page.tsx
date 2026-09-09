@@ -77,7 +77,18 @@ export default async function EingangskorbPage({
         <p className="text-sm text-gray-500">
           {useCases.length} Einträge, sortiert nach geschätztem Potenzial.
         </p>
-        <FortschrittRefreshButton />
+        <div className="flex items-center gap-3 text-sm">
+          <a
+            href={`/admin/export/portfolio?${new URLSearchParams({
+              ...(status !== "ALLE" ? { status } : {}),
+              ...(tenantSlug ? { tenant: tenantSlug } : {}),
+            }).toString()}`}
+            className="rounded-md border border-gray-300 bg-white px-3 py-1.5"
+          >
+            Portfolio als CSV
+          </a>
+          <FortschrittRefreshButton />
+        </div>
       </div>
 
       <div className="mt-4 overflow-x-auto rounded-md border border-gray-200 bg-white">

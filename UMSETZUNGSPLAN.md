@@ -186,9 +186,9 @@ Zentrale Zugriffsschicht: **jede** DB-Abfrage im Einreicher-Kontext geht durch e
 - [ ] S12.5 Ähnlichkeitsprüfung über lokales Embedding-Modell auf dem VPS (unabhängig von der Einwilligung).
 - [ ] S12.6 Widerruf löscht Anreicherungen, Einreichung bleibt.
 
-### Phase 13 — Portfolio-Export (Konzept 10) — offen
+### Phase 13 — Portfolio-Export (Konzept 10)
 
-- [ ] S13.1 CSV/XLSX-Export der Portfolioübersicht im Adminbereich.
+- [x] S13.1 CSV-Export `/admin/export/portfolio` (`src/lib/portfolio.ts`): 26 Spalten inkl. Wertkorridor, Prozessschritt-Zähler (gesamt / Wartezeit / Entscheidung), OpenProject-Status. UTF-8 mit BOM + Semikolon für Excel; respektiert die Eingangskorb-Filter (Kunde/Status). Link im Eingangskorb.
 
 ---
 
