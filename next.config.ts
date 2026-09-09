@@ -25,8 +25,6 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  // Schlankes, eigenständiges Server-Bundle für den Container (Konzept Abschnitt 8).
-  output: "standalone",
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

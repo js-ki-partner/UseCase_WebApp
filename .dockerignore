@@ -1,0 +1,16 @@
+node_modules
+.next
+.git
+.env
+.env.*
+!.env.example
+secrets.enc.yaml
+.sops.yaml
+backups
+*.log
+coverage
+.claude
+scratchpad
+*.md
+!openproject-mapping.json
+.deploy-previous-ref

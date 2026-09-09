@@ -69,10 +69,12 @@ curl -fsS http://127.0.0.1:3005/api/health && echo " OK"
 cat <<'EOF'
 
 Naechste Schritte:
-  1. Ersten Admin anlegen:
-       docker compose -f docker-compose.prod.yml exec app npm run db:seed
-     Zugangsdaten stehen im Output; 2FA beim ersten Login einrichten,
-     SEED_ADMIN_PASSWORT danach aendern.
+  1. Ersten Admin anlegen (E-Mail/Name anpassen; ohne ADMIN_PASSWORT wird eins
+     erzeugt und einmalig ausgegeben):
+       docker compose -f docker-compose.prod.yml exec \
+         -e ADMIN_EMAIL=jens.schmidt@ki-partner.tech -e "ADMIN_NAME=Jens Schmidt" \
+         app npm run db:admin
+     2FA wird beim ersten Login eingerichtet.
   2. Caddy: Caddyfile.snippet in die Caddyfile aufnehmen, 'systemctl reload caddy'.
   3. DNS: A-Record ideen.ki-partner.tech -> VPS-IP.
   4. Weitere Deploys: ./scripts/deploy.sh

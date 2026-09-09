@@ -61,8 +61,11 @@ generiert), öffnet `sops` für die beiden Werte, die du selbst einträgst
 Danach:
 
 ```bash
-# 1. ersten Admin anlegen (2. Faktor beim ersten Login, Passwort danach ändern)
-docker compose -f docker-compose.prod.yml exec app npm run db:seed
+# 1. ersten Admin anlegen (2. Faktor beim ersten Login).
+#    Ohne ADMIN_PASSWORT wird ein Zufallspasswort erzeugt und einmalig ausgegeben.
+docker compose -f docker-compose.prod.yml exec \
+  -e ADMIN_EMAIL=jens.schmidt@ki-partner.tech -e "ADMIN_NAME=Jens Schmidt" \
+  app npm run db:admin
 
 # 2. Caddy: Inhalt von Caddyfile.snippet in die Caddyfile aufnehmen
 systemctl reload caddy
