@@ -25,6 +25,9 @@ export default async function DashboardLayout({
             <Link href="/admin/tenants" className="text-gray-600 hover:text-black">
               Kunden
             </Link>
+            <Link href="/admin/prio" className="text-gray-600 hover:text-black">
+              Priorisierung
+            </Link>
             <Link href="/admin/audit" className="text-gray-600 hover:text-black">
               Audit
             </Link>

@@ -57,8 +57,9 @@ model Tenant {
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 
-  useCases UseCase[]
-  aiLogs   AiTransferLog[]
+  useCases   UseCase[]
+  aiLogs     AiTransferLog[]
+  prioRunden PrioRunde[]
 
   @@map("tenant")
 }
@@ -236,4 +237,37 @@ model MagicLink {
   createdAt  DateTime @default(now())
 
   @@map("magic_link")
+}
+
+// Priorisierungsmodus für Workshops (Konzept Abschnitt 10, Stufe 3):
+// fiktives Budget pro Teilnehmer, verteilt auf Use-Case-Karten.
+model PrioRunde {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  tenant              Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  titel               String
+  budgetProTeilnehmer Int      @default(1000)
+  zugangsCode         String   @unique // Teil der Teilnehmer-URL
+  offen               Boolean  @default(true)
+  // welche Use Cases zur Abstimmung stehen (Reihenfolge = Anzeige)
+  useCaseIds          Json
+  createdAt           DateTime @default(now())
+  geschlossenAm       DateTime?
+
+  stimmen PrioStimme[]
+
+  @@index([tenantId])
+  @@map("prio_runde")
+}
+
+model PrioStimme {
+  id             String    @id @default(cuid())
+  prioRundeId    String
+  prioRunde      PrioRunde @relation(fields: [prioRundeId], references: [id], onDelete: Cascade)
+  teilnehmerName String?
+  verteilung     Json // { useCaseId: euroBetrag }
+  abgegebenAm    DateTime  @default(now())
+
+  @@index([prioRundeId])
+  @@map("prio_stimme")
 }

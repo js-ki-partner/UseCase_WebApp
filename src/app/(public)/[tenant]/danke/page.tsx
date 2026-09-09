@@ -70,12 +70,15 @@ export default async function DankePage({
         </div>
       )}
 
-      <div className="mt-8 flex gap-4">
+      <div className="mt-8 flex flex-wrap items-center gap-4">
         <Link
           href={`/${slug}`}
           className="accent-bg rounded-md px-5 py-2.5 font-medium text-white"
         >
           Weiteren Use Case einreichen
+        </Link>
+        <Link href={`/${slug}/uebersicht`} className="accent-text text-sm underline">
+          Portfolio Ihres Hauses ansehen →
         </Link>
       </div>
     </EinreicherChrome>

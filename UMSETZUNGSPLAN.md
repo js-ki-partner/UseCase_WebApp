@@ -193,6 +193,29 @@ Zentrale Zugriffsschicht: **jede** DB-Abfrage im Einreicher-Kontext geht durch e
 
 ---
 
+## Ausbaustufe 3 — Kundenerlebnis (Konzept Abschnitt 10)
+
+### Phase 14 — Kunden-Portfolio-Sicht
+
+- [x] S14.1 `/[tenant]/uebersicht`: read-only Portfolio des Kunden (Token-Session), Kennzahlen (Anzahl, Potenzial gesamt, in Umsetzung), Karten mit vereinfachtem Fortschritt. Realistischer Bewertungswert nur bei `tenant.zeigtBewertung` + Reifegrad BEWERTET. Verlinkt vom Formular und der Danke-Seite.
+
+### Phase 15 — Priorisierungsmodus für Workshops
+
+- [x] S15.1 `PrioRunde` / `PrioStimme` (Migration `prio_runde`). Admin `/admin/prio`: Runde anlegen (Kunde, Titel, Budget je Teilnehmer, Use-Case-Auswahl), Ergebnis-Ranking mit Balken, Runde öffnen/schließen/löschen, Teilnehmer-Link.
+- [x] S15.2 Teilnehmer `/p/[code]`: ohne Login, fiktives Budget (Standard 1.000 €) auf Use-Case-Karten verteilen (Stepper + Live-Restbudget), Name optional. `verteilungGueltig()` unit-getestet. Branding je Kunde.
+- [x] S15.3 Auswertung `werteRundeAus()`: Summe/Anteil/Stimmenzahl je Karte, sortiert.
+
+### Phase 16 — Branding je Kunde
+
+- [x] Bereits umgesetzt: Logo, Akzentfarbe, „bereitgestellt von KI Partner" auf allen Einreicher- und Teilnehmer-Seiten (`EinreicherChrome`, `KiPartnerLogo`).
+
+### Noch offen (Ausbaustufe 3/4)
+
+- [ ] Kunden-Dashboard mit echtem Ansprechpartner-Zugang (Magic Link statt geteiltem Token).
+- [ ] Ausbaustufe 4: mehrere Betreuer im Adminbereich, Vorlagenbibliothek, anonymisierter Benchmark über Kunden.
+
+---
+
 ## Reihenfolge der Umsetzung (kritischer Pfad)
 
 1. Phase 0 + Phase 1 (Gerüst, Schema, Seed)
