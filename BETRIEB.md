@@ -8,7 +8,7 @@ verbindliche SOPS-/age-Prinzip). Stack-Verzeichnis auf dem VPS:
 
 | Komponente | Beschreibung |
 |---|---|
-| `app` | Next.js-Anwendungscontainer (standalone build), intern `:3000`, gemappt auf `127.0.0.1:3005` |
+| `app` | Next.js-Anwendungscontainer (`npm run start`), intern `:3000`, gemappt auf `127.0.0.1:3005` |
 | `db` | PostgreSQL 16 |
 | Caddy | vorhandener Reverse Proxy, terminiert TLS, proxyt auf `127.0.0.1:3005` |
 
