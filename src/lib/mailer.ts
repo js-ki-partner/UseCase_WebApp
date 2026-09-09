@@ -26,7 +26,18 @@ interface SmtpOptions {
 
 /** SMTP_URL (smtp://user:pass@host:port bzw. smtps://…) in nodemailer-Optionen. */
 function parseSmtpUrl(smtpUrl: string): SmtpOptions {
-  const u = new URL(smtpUrl);
+  // Haeufige Fehler abfangen: umschliessende Anführungszeichen, fehlendes Schema.
+  let roh = smtpUrl.trim().replace(/^['"]|['"]$/g, "");
+  if (!/^smtps?:\/\//i.test(roh)) roh = "smtp://" + roh;
+  let u: URL;
+  try {
+    u = new URL(roh);
+  } catch {
+    throw new Error(
+      `SMTP_URL ist keine gültige URL. Erwartet: smtps://benutzer:passwort@mailserver:465 ` +
+        `(Sonderzeichen im Passwort URL-kodieren: @ -> %40, : -> %3A, / -> %2F).`,
+    );
+  }
   const port = u.port ? Number(u.port) : u.protocol === "smtps:" ? 465 : 587;
   // Port 465 ist implizit TLS — haeufige Fehlkonfiguration: smtp:// statt smtps://
   const secure = u.protocol === "smtps:" || port === 465;
