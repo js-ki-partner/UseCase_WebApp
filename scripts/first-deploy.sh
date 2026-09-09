@@ -31,6 +31,12 @@ if [ ! -f .sops.yaml ]; then
   echo "==> .sops.yaml erstellt (age: $AGE_PUB)"
 fi
 
+# Kaputte/leere secrets.enc.yaml aus einem abgebrochenen Lauf entfernen.
+if [ -f secrets.enc.yaml ] && ! $SOPS -d --output-type dotenv secrets.enc.yaml >/dev/null 2>&1; then
+  echo "==> secrets.enc.yaml ist unvollstaendig (abgebrochener Lauf) -> wird neu erzeugt."
+  rm -f secrets.enc.yaml
+fi
+
 # --- secrets.enc.yaml anlegen (Zufallswerte generiert, 2 Werte traegt der User ein) ---
 if [ ! -f secrets.enc.yaml ]; then
   TMP="$(mktemp)"; trap 'shred -u "$TMP" 2>/dev/null || rm -f "$TMP"' EXIT
@@ -69,7 +75,10 @@ POSTGRES_PASSWORD: ${PG_PW}
 POSTGRES_DB: ucradar
 EOF
   unset OP_KEY SMTP
-  $SOPS --encrypt --input-type yaml --output-type yaml "$TMP" > secrets.enc.yaml
+  # age-Recipient direkt angeben: die creation_rules in .sops.yaml greifen nur
+  # bei Dateinamen, die auf secrets.enc.yaml enden, nicht bei der mktemp-Datei.
+  $SOPS --encrypt --age "$AGE_PUB" --input-type yaml --output-type yaml "$TMP" > secrets.enc.yaml \
+    || { rm -f secrets.enc.yaml; echo "sops --encrypt fehlgeschlagen."; exit 1; }
   sudo chown "$USER:$(id -gn)" secrets.enc.yaml .sops.yaml
   echo "==> secrets.enc.yaml erstellt (verschluesselt). Aendern spaeter mit:"
   echo "    SOPS_AGE_KEY_FILE=/etc/sops/age-key.txt sudo /usr/local/bin/sops secrets.enc.yaml"
