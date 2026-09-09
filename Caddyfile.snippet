@@ -1,0 +1,5 @@
+# In die vorhandene Caddyfile auf dem VPS aufnehmen (Domain ggf. anpassen).
+# ideen.ki-partner.tech muss per DNS-A-Record auf den VPS zeigen.
+ideen.ki-partner.tech {
+	reverse_proxy 127.0.0.1:3005
+}

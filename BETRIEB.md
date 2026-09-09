@@ -40,30 +40,42 @@ Vorlage: [secrets.example.yaml](secrets.example.yaml). Eintragen über
 `openproject-mapping.json` (instanzspezifische IDs, keine Geheimnisse) liegt im
 Repo — bei Strukturänderungen in OpenProject abgleichen.
 
-## Erststart
+## Erstinbetriebnahme
+
+Voraussetzung: age-Key auf dem Server (`/etc/sops/age-key.txt`, siehe
+DEPLOYMENT.md „Einmalige Einrichtung pro Server").
 
 ```bash
+sudo mkdir -p /opt/stacks/ucradar && sudo chown "$USER" /opt/stacks/ucradar
 cd /opt/stacks/ucradar
-sops -d --output-type dotenv secrets.enc.yaml > .env
-docker compose -f docker-compose.prod.yml up -d --build
+git clone https://github.com/js-ki-partner/UseCase_WebApp.git .
+./scripts/first-deploy.sh
 ```
 
-Der Entrypoint führt `prisma migrate deploy` aus, bevor der Server startet.
+`first-deploy.sh` erzeugt `.sops.yaml` und `secrets.enc.yaml` (Zufallswerte für
+`SESSION_SECRET`, `TOKEN_HASH_SECRET`, `JOB_TOKEN`, `POSTGRES_PASSWORD` werden
+generiert), öffnet `sops` für die beiden Werte, die du selbst einträgst
+(`OP_API_KEY`, `SMTP_URL`), baut, migriert und startet. Der Entrypoint führt
+`prisma migrate deploy` aus.
 
-Ersten Admin-User anlegen (einmalig):
+Danach:
 
 ```bash
+# 1. ersten Admin anlegen (2. Faktor beim ersten Login, Passwort danach ändern)
 docker compose -f docker-compose.prod.yml exec app npm run db:seed
+
+# 2. Caddy: Inhalt von Caddyfile.snippet in die Caddyfile aufnehmen
+systemctl reload caddy
 ```
 
-Der zweite Faktor wird beim ersten Login eingerichtet. Standard-Zugangsdaten aus
-`prisma/seed.ts` **sofort ändern** (`SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORT`).
+DNS: A-Record `ideen.ki-partner.tech` → VPS-IP.
 
 ## Laufender Betrieb
 
 | Aufgabe | Kommando |
 |---|---|
-| Deploy | `./scripts/deploy.sh` |
+| Erstinbetriebnahme | `./scripts/first-deploy.sh` |
+| Deploy (danach) | `./scripts/deploy.sh` |
 | Rollback (Code) | `./scripts/rollback.sh` |
 | Backup (Cron 03:00) | `./scripts/backup.sh` |
 | OpenProject-Verbindung prüfen | `./scripts/op-test.sh` |
