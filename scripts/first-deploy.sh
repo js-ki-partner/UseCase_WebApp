@@ -75,10 +75,14 @@ POSTGRES_PASSWORD: ${PG_PW}
 POSTGRES_DB: ucradar
 EOF
   unset OP_KEY SMTP
-  # age-Recipient direkt angeben: die creation_rules in .sops.yaml greifen nur
-  # bei Dateinamen, die auf secrets.enc.yaml enden, nicht bei der mktemp-Datei.
-  $SOPS --encrypt --age "$AGE_PUB" --input-type yaml --output-type yaml "$TMP" > secrets.enc.yaml \
-    || { rm -f secrets.enc.yaml; echo "sops --encrypt fehlgeschlagen."; exit 1; }
+  # An der Ziel-Pfad verschluesseln: nur so greift die creation_rule aus
+  # .sops.yaml (path_regex endet auf secrets.enc.yaml). Kurzzeitig liegt hier
+  # Klartext (umask 077 -> Modus 600), dann in-place verschluesselt.
+  cp "$TMP" secrets.enc.yaml
+  if ! $SOPS --encrypt --in-place secrets.enc.yaml; then
+    shred -u secrets.enc.yaml 2>/dev/null || rm -f secrets.enc.yaml
+    echo "sops --encrypt fehlgeschlagen."; exit 1
+  fi
   sudo chown "$USER:$(id -gn)" secrets.enc.yaml .sops.yaml
   echo "==> secrets.enc.yaml erstellt (verschluesselt). Aendern spaeter mit:"
   echo "    SOPS_AGE_KEY_FILE=/etc/sops/age-key.txt sudo /usr/local/bin/sops secrets.enc.yaml"
