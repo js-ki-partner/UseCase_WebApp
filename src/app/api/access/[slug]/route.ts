@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { establishTenantAccess } from "@/lib/tenant";
+import { env } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,9 @@ export async function GET(
 ) {
   const { slug } = await params;
   const token = req.nextUrl.searchParams.get("t");
-  const ziel = new URL(`/${slug}`, req.nextUrl.origin);
+  // Ziel-URL aus APP_BASE_URL bauen: hinter dem Reverse Proxy ist
+  // req.nextUrl.origin der interne Container-Host (localhost:3000).
+  const ziel = new URL(`/${slug}`, env.appBaseUrl());
 
   if (!token) {
     return NextResponse.redirect(ziel);
