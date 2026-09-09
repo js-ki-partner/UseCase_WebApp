@@ -1,9 +1,11 @@
 # Produktions-Compose fuer den IONOS-VPS. Laeuft neben OpenProject hinter
-# demselben Caddy-Reverse-Proxy (Konzept Abschnitt 8).
+# demselben Caddy-Reverse-Proxy.
 #
+#   sops -d --output-type dotenv secrets.enc.yaml > .env
 #   docker compose -f docker-compose.prod.yml up -d --build
 #
-# Secrets kommen aus .env.prod (SOPS+age entschluesselt, siehe DEPLOYMENT.md).
+# .env wird bei jedem Deploy aus secrets.enc.yaml generiert (siehe DEPLOYMENT.md
+# / BETRIEB.md) und ist git-ignoriert.
 services:
   app:
     build:
@@ -11,7 +13,7 @@ services:
     image: ucradar:latest
     restart: unless-stopped
     env_file:
-      - .env.prod
+      - .env
     ports:
       - "127.0.0.1:3005:3000" # nur lokal; Caddy terminiert TLS und proxyt hierher
     volumes:

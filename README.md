@@ -56,4 +56,5 @@ prisma/                      Schema, Migrationen, Seed
 
 ## Betrieb
 
-Siehe [DEPLOYMENT.md](DEPLOYMENT.md).
+SOPS-/age-Prinzip: [DEPLOYMENT.md](DEPLOYMENT.md). App-spezifisch (Komponenten,
+Secrets, Cron, Restore): [BETRIEB.md](BETRIEB.md).

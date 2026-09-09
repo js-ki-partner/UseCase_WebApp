@@ -66,8 +66,8 @@ Stand: 8. September 2026. `[x]` erfüllt und geprüft · `[~]` erfüllt, Prüfun
 - [x] `Dockerfile` (standalone) + `docker-compose.prod.yml` + Caddyfile-Snippet.
 - [x] `deploy.sh` / `rollback.sh` / `backup.sh` (je ein Kommando).
 - [x] `/api/health` prüft die DB.
-- [ ] SOPS-verschlüsselte `.env.prod.sops.yaml` anlegen (`.env.prod.example` als Vorlage).
-- [~] Restore-Lauf einmal proben (Prozedur in DEPLOYMENT.md dokumentiert).
+- [ ] SOPS: `.sops.yaml` + verschlüsselte `secrets.enc.yaml` auf dem VPS anlegen (`secrets.example.yaml` als Vorlage, Prinzip in DEPLOYMENT.md).
+- [~] Restore-Lauf einmal proben (Prozedur in BETRIEB.md dokumentiert).
 
 ## Tests
 

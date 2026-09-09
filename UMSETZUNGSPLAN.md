@@ -143,7 +143,7 @@ Zentrale Zugriffsschicht: **jede** DB-Abfrage im Einreicher-Kontext geht durch e
 
 - [x] S8.1 `Dockerfile` (multi-stage, standalone output, Entrypoint mit `migrate deploy`).
 - [x] S8.2 `docker-compose.prod.yml` + Caddyfile-Snippet in [DEPLOYMENT.md](DEPLOYMENT.md).
-- [~] S8.3 SOPS+age — Ablauf in `deploy.sh` vorbereitet, `.env.prod.example` als Vorlage; die verschlüsselte `.env.prod.sops.yaml` muss auf dem VPS angelegt werden.
+- [~] S8.3 SOPS+age nach KI-Partner-Standard ([DEPLOYMENT.md](DEPLOYMENT.md)): `deploy.sh` entschlüsselt `secrets.enc.yaml` → `.env` (`--output-type dotenv`). Vorlage `secrets.example.yaml`. Die verschlüsselte `secrets.enc.yaml` + `.sops.yaml` müssen auf dem VPS angelegt werden.
 - [x] S8.4 `scripts/deploy.sh` + `scripts/rollback.sh` (je ein Kommando).
 - [x] S8.5 `scripts/backup.sh` (täglich, 7 Tage); Restore-Prozedur dokumentiert, noch nicht geprobt.
 - [x] S8.6 `/api/health` (prüft DB).

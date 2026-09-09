@@ -12,7 +12,8 @@ git reset --hard origin/main
 echo "$PREV" > .deploy-previous-ref
 
 echo "==> Secrets entschluesseln (SOPS + age)"
-sops --decrypt --output .env.prod .env.prod.sops.yaml
+# --output-type dotenv erzwingen, sonst KEY: value statt KEY=value (siehe DEPLOYMENT.md)
+sops -d --output-type dotenv secrets.enc.yaml > .env
 
 echo "==> Mapping-Datei pruefen"
 test -f openproject-mapping.json || { echo "openproject-mapping.json fehlt"; exit 1; }

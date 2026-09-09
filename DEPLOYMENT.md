@@ -1,126 +1,144 @@
-# Betrieb & Deployment
+# Deployment & Secrets-Verwaltung (IONOS VPS)
 
-Zielumgebung: bestehender IONOS-VPS, neben OpenProject, hinter demselben
-Caddy-Reverse-Proxy (Konzept Abschnitt 8).
+Diese Datei beschreibt die verbindliche Vorgehensweise für Deployment und
+Secrets-Handling auf dem IONOS VPS. Sie liegt in jedem Projekt-Repo im
+Root-Verzeichnis, damit Claude Code sie automatisch als Kontext liest und
+sich bei jedem Deploy an dieselbe Vorgehensweise hält.
 
-## Komponenten
+## Grundprinzip
 
-| Komponente | Beschreibung |
-|---|---|
-| `app` | Next.js-Anwendungscontainer (standalone build), lauscht intern auf `:3000`, gemappt auf `127.0.0.1:3005` |
-| `db` | PostgreSQL 16 (eigene Datenbank; bei kleinem Volumen genügt das) |
-| Caddy | vorhandener Reverse Proxy, terminiert TLS, proxyt auf `127.0.0.1:3005` |
+- Secrets liegen **niemals im Klartext** im Repo oder im Chat.
+- Secrets werden mit **SOPS (Secrets OPerationS)** und **age** verschlüsselt
+  im Repo versioniert (`secrets.enc.yaml`).
+- Entschlüsselung erfolgt **ausschließlich auf dem VPS** mit einem privaten
+  age-Key, der nie das Terminal des Servers verlässt und nie in einen Chat
+  eingefügt wird.
+- Claude Code darf verschlüsselte Dateien lesen, bearbeiten (neue
+  verschlüsselte Werte hinzufügen) und Deploy-Befehle ausführen — es sieht
+  dabei nur Chiffretext, nie den entschlüsselten Inhalt.
 
-## Erstmalige Einrichtung
-
-1. Repository auf den VPS klonen.
-2. `openproject-mapping.json` aus dem Runbook *OpenProject für die Use-Case-Erfassung*
-   befüllen (Custom-Field-IDs, Options-IDs). Nicht im Repo — instanzspezifisch.
-3. Secrets als `.env.prod.sops.yaml` anlegen (SOPS + age, wie bei OpenProject):
-   - `DATABASE_URL` (auf den `db`-Container: `postgresql://ucradar:…@db:5432/ucradar`)
-   - `SESSION_SECRET`, `TOKEN_HASH_SECRET` (je ≥ 32 Zeichen, `openssl rand -base64 36`)
-   - `APP_BASE_URL` (z. B. `https://ideen.ki-partner.tech`)
-   - `OP_BASE_URL`, `OP_API_KEY` (siehe `OPENPROJECT_ZUGANG.md`)
-   - `SMTP_URL`, `MAIL_FROM`
-   - `POSTGRES_PASSWORD`, ggf. `POSTGRES_USER`, `POSTGRES_DB`
-4. Caddyfile-Eintrag ergänzen:
-
-   ```
-   ideen.ki-partner.tech {
-       reverse_proxy 127.0.0.1:3005
-   }
-   ```
-
-5. Erststart:
-
-   ```bash
-   sops --decrypt --output .env.prod .env.prod.sops.yaml
-   docker compose -f docker-compose.prod.yml up -d --build
-   ```
-
-   Der Entrypoint führt `prisma migrate deploy` aus, bevor der Server startet.
-
-6. Ersten Admin-User anlegen (einmalig, im laufenden Container):
-
-   ```bash
-   docker compose -f docker-compose.prod.yml exec app \
-     node -e "require('tsx/cjs'); require('./prisma/seed.ts')"
-   ```
-
-   Alternativ ein kleines Verwaltungsskript; der 2. Faktor wird beim ersten
-   Login eingerichtet.
-
-## Laufender Betrieb
-
-| Aufgabe | Kommando |
-|---|---|
-| Deploy (Pull, Build, Migrate, Healthcheck) | `./scripts/deploy.sh` |
-| Rollback auf die zuletzt deployte Version | `./scripts/rollback.sh` |
-| Backup (Cron: täglich 03:00) | `./scripts/backup.sh` |
-| OpenProject-Verbindung prüfen | `./scripts/op-test.sh` |
-| Fortschritt aus OpenProject zurücklesen | `curl -fsS -H "Authorization: Bearer $JOB_TOKEN" http://127.0.0.1:3005/api/jobs/op-status` |
-| Logs | `docker compose -f docker-compose.prod.yml logs -f app` |
-| Health | `curl -fsS http://127.0.0.1:3005/api/health` |
-
-### Cron: Status-Rücklesen aus OpenProject
-
-Der App-Status (für die vereinfachte Fortschrittsanzeige beim Kunden) wird nicht
-automatisch aktualisiert. Empfohlener Cron-Eintrag (z. B. alle 30 Minuten):
+## Verzeichnisstruktur (pro App)
 
 ```
-*/30 * * * * curl -fsS -H "Authorization: Bearer <JOB_TOKEN>" https://ideen.ki-partner.tech/api/jobs/op-status > /dev/null
+/opt/stacks/<app-name>/
+  docker-compose.yml
+  Caddyfile.snippet        # Route für Caddy (falls eigenständig)
+  secrets.enc.yaml         # verschlüsselt, darf ins Git-Repo
+  .sops.yaml               # SOPS-Konfiguration (welcher age-Key gilt)
+  .env                     # wird bei Deploy generiert, NICHT versionieren
 ```
 
-`JOB_TOKEN` liegt in `.env.prod` / `secrets.enc.yaml`. Ohne gesetztes Token gibt
-der Endpunkt 503 zurück und der Rücklese-Job ist damit deaktiviert.
-Manuell geht es jederzeit über den Button „Fortschritt aus OpenProject
-aktualisieren" im Eingangskorb.
+`.env` gehört in `.gitignore` — sie entsteht erst zur Laufzeit aus
+`secrets.enc.yaml`.
 
-### KI-Anreicherung (optional, Konzept 4.6)
+## Einmalige Einrichtung pro Server (nicht pro Projekt)
 
-Standardmäßig **aus** (`KI_PROVIDER` leer) — dann findet keinerlei externe
-Verarbeitung statt und der Einwilligungsschalter im Formular ist deaktiviert.
+Diese Schritte führst **du selbst per SSH** aus, nicht Claude im Chat:
 
-Aktivierung erfordert einen Anbieter mit EU-Endpunkt, Auftragsverarbeitungs­vertrag
-und ausgeschlossener Trainingsnutzung. Dann in `.env.prod`:
+```bash
+# 1. age installieren
+sudo apt install age
 
-```
-KI_PROVIDER="openai-compatible"
-KI_BASE_URL="https://<eu-endpunkt>/v1"
-KI_API_KEY="..."
-KI_MODELL="..."
-KI_ANBIETER_NAMEN="<im Dialog genannter Anbietername>"
+# 2. Schlüsselpaar erzeugen
+age-keygen -o /etc/sops/age-key.txt
+
+# 3. Rechte einschränken
+sudo chown root:root /etc/sops/age-key.txt
+sudo chmod 600 /etc/sops/age-key.txt
 ```
 
-Ändern sich Anbieter oder Hinweistext, muss `KI_HINWEIS_VERSION` in
-`src/lib/ki.ts` hochgezählt werden — alte Einwilligungen gelten dann nicht weiter.
+Der Public Key wird beim Erzeugen ausgegeben (Zeile beginnt mit
+`# public key: age1...`). Diesen Public Key notierst du dir — er kommt in
+jede `.sops.yaml` der einzelnen Projekte. Der **private** Key bleibt
+dauerhaft unter `/etc/sops/age-key.txt` und wird von dort nie kopiert,
+verschickt oder in einen Chat eingefügt.
 
-Cron für die Nachverarbeitung wartender Aufträge (z. B. alle 5 Minuten):
+SOPS muss außerdem wissen, wo der private Key liegt (systemweit, gilt für
+alle Projekte):
 
+```bash
+echo 'export SOPS_AGE_KEY_FILE=/etc/sops/age-key.txt' | sudo tee -a /etc/profile.d/sops.sh
 ```
-*/5 * * * * curl -fsS -H "Authorization: Bearer <JOB_TOKEN>" https://ideen.ki-partner.tech/api/jobs/ki-enrichment > /dev/null
+
+## Einmalige Einrichtung pro Projekt
+
+```bash
+# .sops.yaml im Projektverzeichnis
+cat > .sops.yaml <<'EOF'
+creation_rules:
+  - path_regex: secrets\.enc\.yaml$
+    age: age1DEIN_PUBLIC_KEY_HIER
+EOF
 ```
 
-## Datensicherung
+Secrets-Datei anlegen und verschlüsseln:
 
-- `scripts/backup.sh` schreibt ein gzip-`pg_dump` nach `./backups`, Vorhaltung 7 Tage.
-- **Restore proben** (vor dem ersten Produktivkunden, Konzept Abschnitt 8):
+```bash
+sops secrets.enc.yaml
+```
 
-  ```bash
-  gunzip -c backups/ucradar-JJJJMMTT-HHMMSS.sql.gz | \
-    docker compose -f docker-compose.prod.yml exec -T db \
-    psql -U ucradar -d ucradar_restore_test
-  ```
+Das öffnet einen Editor mit einer YAML-Vorlage, z. B.:
 
-## Rollback und Migrationen
+```yaml
+POSTGRES_PASSWORD: hier-echtes-passwort-eintragen
+API_KEY: hier-echten-key-eintragen
+```
 
-`rollback.sh` setzt nur den Code zurück. Schema-Migrationen werden **nicht**
-automatisch rückgängig gemacht. Enthält ein fehlgeschlagenes Deploy eine
-inkompatible Migration, zuerst das Backup einspielen, dann Code-Rollback.
-Migrationen daher additiv halten (Spalten hinzufügen statt umbenennen).
+Beim Speichern verschlüsselt SOPS die Datei automatisch. Das Ergebnis
+(`secrets.enc.yaml`) ist Chiffretext und darf bedenkenlos ins Git-Repo.
 
-## Offene Betriebspunkte (vor Produktivgang)
+## Standard-Deploy-Ablauf (das, was Claude Code ausführt)
 
-- Auftragsverarbeitungsvertrag je Kunde vorbereiten (Konzept Abschnitt 9).
-- Aufbewahrungsfrist für nicht weiterverfolgte Einreichungen festlegen und Job einrichten.
-- Löschworkflow „alle Daten eines Kunden inkl. OpenProject-Seite" dokumentieren.
+```bash
+cd /opt/stacks/<app-name>
+sops -d --output-type dotenv secrets.enc.yaml > .env
+docker compose up -d
+```
+
+`--output-type dotenv` erzwingen: sonst gibt `sops -d` YAML (`KEY: value`) statt
+`KEY=value` aus und `env_file` liest die Variablen nicht (dieser Fehler ist beim
+OpenProject-Deploy schon einmal passiert — siehe `OPENPROJECT_ZUGANG.md`).
+
+Diesen Dreizeiler kann Claude Code bei jedem Deploy identisch ausführen.
+Es sieht dabei nur den Befehl und den Erfolg/Fehler-Output, nicht den
+Inhalt von `.env`.
+
+## Secret aktualisieren oder ergänzen
+
+```bash
+sops secrets.enc.yaml
+```
+
+Öffnet die Datei entschlüsselt im lokalen Editor (nur auf dem Server, wo
+der private Key liegt), Änderung eintragen, speichern → automatisch neu
+verschlüsselt.
+
+## Regeln für Claude Code in diesem Projekt
+
+1. Niemals den Inhalt von `.env` oder entschlüsselten Secrets in eine
+   Chat-Antwort, einen Commit-Kommentar oder eine Log-Ausgabe schreiben.
+2. Neue Secrets immer über `sops secrets.enc.yaml` einfügen lassen (User
+   trägt den Wert selbst ein), nie als Klartext-Parameter übergeben.
+3. `.env` niemals committen — Prüfung: `.gitignore` muss `.env` enthalten.
+4. Der private age-Key (`/etc/sops/age-key.txt`) wird nie gelesen, kopiert,
+   angezeigt oder in eine Antwort übernommen.
+5. Vor jedem `docker compose up -d`: prüfen, ob `secrets.enc.yaml` neuer
+   ist als die zuletzt generierte `.env`, ggf. neu entschlüsseln.
+
+## Backup des privaten Keys
+
+Der private Key existiert nur einmal auf dem Server. Ohne ihn sind alle
+`secrets.enc.yaml`-Dateien aller Projekte unwiederbringlich verloren.
+Empfehlung: `/etc/sops/age-key.txt` verschlüsselt (z. B. mit einem
+Passwort-Manager wie 1Password/Bitwarden als sicherer Notiz) außerhalb des
+Servers sichern — nicht per Chat, nicht per E-Mail, sondern per direktem
+Kopiervorgang über eine gesicherte Verbindung (z. B. `scp` auf deinen
+lokalen Rechner, dort sofort in den Passwort-Manager, lokale Kopie danach
+löschen).
+
+---
+
+## App-spezifisch: UC-Radar
+
+Die konkreten Komponenten, benötigten Secrets, Cron-Jobs, die KI-Anreicherung
+und das Restore-Verfahren für **diese** App stehen in [BETRIEB.md](BETRIEB.md).

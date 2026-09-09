@@ -30,13 +30,13 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files
+# .env wird auf dem Server bei jedem Deploy aus secrets.enc.yaml generiert
+# (SOPS + age, siehe DEPLOYMENT.md) und darf NIE committet werden.
 .env*
 !.env.example
-!.env.prod.example
-# entschlüsselte Produktions-Secrets nie committen (die .sops.yaml darf rein)
-.env.prod
-!.env.prod.sops.yaml
+# secrets.enc.yaml (Chiffretext) und .sops.yaml gehören laut DEPLOYMENT.md ins Repo
+# und werden hier NICHT ignoriert.
 
 # vercel
 .vercel
@@ -44,8 +44,9 @@ yarn-error.log*
 # openproject-mapping.json enthält nur instanzspezifische IDs, keine Geheimnisse
 # und darf laut Runbook (Abschnitt 6) ins Repository — daher NICHT ignoriert.
 
-# lokale Secrets
+# lokale Secrets / entschlüsselte Kopien
 /secrets/
+age-key.txt
 
 # typescript
 *.tsbuildinfo
