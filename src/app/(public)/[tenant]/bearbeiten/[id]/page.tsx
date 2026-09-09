@@ -79,7 +79,7 @@ export default async function BearbeitenPage({
       <KurzerfassungForm
         action={action}
         modus="ergaenzen"
-        kiVerfuegbar={kiKonfiguriert()}
+        kiVerfuegbar={kiKonfiguriert() && ctx.kiAktiviert}
         defaults={{
           problemText: useCase.problemText,
           rolle: useCase.rolle,

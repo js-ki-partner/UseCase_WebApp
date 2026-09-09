@@ -79,6 +79,7 @@ export async function erstelleTenant(
       brandingLogoUrl: parsed.data.brandingLogoUrl ?? null,
       brandingAccentColor: parsed.data.brandingAccentColor ?? null,
       zeigtBewertung: formData.get("zeigtBewertung") === "on",
+      kiAktiviert: formData.get("kiAktiviert") === "on",
     },
   });
   await audit({
@@ -143,6 +144,7 @@ export async function aktualisiereTenant(
       brandingLogoUrl: parsed.data.brandingLogoUrl ?? null,
       brandingAccentColor: parsed.data.brandingAccentColor ?? null,
       zeigtBewertung: formData.get("zeigtBewertung") === "on",
+      kiAktiviert: formData.get("kiAktiviert") === "on",
     },
   });
   revalidatePath(`/admin/tenants/${tenantId}`);

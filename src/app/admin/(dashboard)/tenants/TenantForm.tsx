@@ -25,6 +25,7 @@ interface Werte {
   brandingLogoUrl?: string;
   brandingAccentColor?: string;
   zeigtBewertung?: boolean;
+  kiAktiviert?: boolean;
 }
 
 function Submit({ label }: { label: string }) {
@@ -224,6 +225,21 @@ export function TenantForm({
         <span>
           Realistischen Bewertungswert für den Kunden sichtbar machen (ab
           Reifegrad »Bewertet«). Standard: aus.
+        </span>
+      </label>
+
+      <label className="flex items-start gap-2 text-sm">
+        <input
+          type="checkbox"
+          name="kiAktiviert"
+          defaultChecked={werte.kiAktiviert}
+          className="mt-0.5"
+        />
+        <span>
+          KI-Aufbereitung für diesen Kunden anbieten (der Einwilligungsschalter
+          erscheint dann im Formular; die Einwilligung bleibt pro Use Case).
+          Standard: aus. Wirkt nur, wenn zusätzlich ein KI-Anbieter global
+          konfiguriert ist.
         </span>
       </label>
 

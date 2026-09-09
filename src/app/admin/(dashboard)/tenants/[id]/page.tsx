@@ -57,6 +57,7 @@ export default async function TenantDetailPage({
             brandingLogoUrl: tenant.brandingLogoUrl ?? "",
             brandingAccentColor: tenant.brandingAccentColor ?? "",
             zeigtBewertung: tenant.zeigtBewertung,
+            kiAktiviert: tenant.kiAktiviert,
           }}
         />
       </section>

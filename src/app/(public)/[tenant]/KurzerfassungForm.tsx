@@ -37,19 +37,28 @@ function Fehler({ text }: { text?: string }) {
   return <p className="mt-1 text-sm text-red-700">{text}</p>;
 }
 
-function AbsendenButton({ kiAktiv }: { kiAktiv: boolean }) {
+function AbsendenButton({
+  kiAktiv,
+  kiVerfuegbar,
+}: {
+  kiAktiv: boolean;
+  kiVerfuegbar: boolean;
+}) {
   const { pending } = useFormStatus();
+  const label = pending
+    ? "Wird gesendet …"
+    : !kiVerfuegbar
+      ? "Absenden"
+      : kiAktiv
+        ? "Absenden (mit KI-Aufbereitung)"
+        : "Absenden (ohne KI)";
   return (
     <button
       type="submit"
       disabled={pending}
       className="accent-bg rounded-md px-5 py-2.5 font-medium text-white disabled:opacity-60"
     >
-      {pending
-        ? "Wird gesendet …"
-        : kiAktiv
-          ? "Absenden (mit KI-Aufbereitung)"
-          : "Absenden (ohne KI)"}
+      {label}
     </button>
   );
 }
@@ -283,17 +292,20 @@ export function KurzerfassungForm({
         )}
       </fieldset>
 
-      {/* KI-Einwilligung, zweistufig (Konzept Abschnitt 4.6) */}
-      <KiEinwilligungSchalter
-        aktiv={kiAktiv}
-        onChange={setKiAktiv}
-        dialogOffen={kiDialogOffen}
-        setDialogOffen={setKiDialogOffen}
-        verfuegbar={kiVerfuegbar}
-      />
+      {/* KI-Einwilligung, zweistufig (Konzept Abschnitt 4.6).
+          Nur sichtbar, wenn die KI-Aufbereitung für diesen Kunden freigegeben ist. */}
+      {kiVerfuegbar && (
+        <KiEinwilligungSchalter
+          aktiv={kiAktiv}
+          onChange={setKiAktiv}
+          dialogOffen={kiDialogOffen}
+          setDialogOffen={setKiDialogOffen}
+          verfuegbar={kiVerfuegbar}
+        />
+      )}
 
       <div className="flex items-center gap-4">
-        <AbsendenButton kiAktiv={kiAktiv} />
+        <AbsendenButton kiAktiv={kiAktiv} kiVerfuegbar={kiVerfuegbar} />
         {modus === "neu" && (
           <span className="text-sm text-gray-500">
             Details (Prozessschritte) können Sie später ergänzen.

@@ -15,13 +15,15 @@ import { starteAnreicherung } from "@/lib/ki-enrichment";
 
 /**
  * Prüft die vom Client gemeldete KI-Einwilligung serverseitig (Konzept 4.6):
- * nur gültig bei passender Hinweis-Version UND konfiguriertem Anbieter.
+ * gültig nur bei passender Hinweis-Version, global konfiguriertem Anbieter UND
+ * für diesen Kunden freigeschalteter KI-Aufbereitung.
  */
-function pruefeEinwilligung(formData: FormData): boolean {
+function pruefeEinwilligung(formData: FormData, kiAktiviert: boolean): boolean {
   return (
     formData.get("kiEinwilligung") === "on" &&
     formData.get("kiHinweisVersion") === KI_HINWEIS_VERSION &&
-    kiKonfiguriert()
+    kiKonfiguriert() &&
+    kiAktiviert
   );
 }
 
@@ -90,7 +92,7 @@ export async function submitKurzerfassung(
     return { ok: false, fehler: "Die Angaben zu Häufigkeit, Dauer und Anzahl ergeben kein plausibles Potenzial." };
   }
 
-  const kiEinwilligung = pruefeEinwilligung(formData);
+  const kiEinwilligung = pruefeEinwilligung(formData, ctx.kiAktiviert);
 
   const useCase = await tenantDb(ctx.id).useCase.create({
     problemText: d.problemText,
@@ -184,7 +186,7 @@ export async function ergaenzeKurzerfassung(
   const neuEinwilligung =
     !bestehend.kiEinwilligung &&
     !bestehend.kiEinwilligungWiderrufenAm &&
-    pruefeEinwilligung(formData);
+    pruefeEinwilligung(formData, bestehend.tenant.kiAktiviert);
 
   await prisma.useCase.update({
     where: { id: useCaseId },

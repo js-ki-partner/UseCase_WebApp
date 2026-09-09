@@ -84,19 +84,25 @@ Manuell geht beides über Buttons im Adminbereich.
 
 ### KI-Anreicherung (optional, Konzept 4.6)
 
-Standardmäßig **aus** (`KI_PROVIDER` leer) — kein externer Aufruf, der
-Einwilligungsschalter im Formular ist deaktiviert.
+Standardmäßig **aus**. Die Freigabe hat zwei Stufen, damit man sie erst
+aktiviert, wenn ein Kunde danach fragt:
 
-Aktivierung erfordert einen Anbieter mit EU-Endpunkt, Auftragsverarbeitungsvertrag
-und ausgeschlossener Trainingsnutzung. Dann in `secrets.enc.yaml`:
+1. **Global** — Anbieter in `secrets.enc.yaml` konfigurieren. Anbieter mit
+   EU-Endpunkt, Auftragsverarbeitungsvertrag, ausgeschlossener Trainingsnutzung:
 
-```yaml
-KI_PROVIDER: openai-compatible
-KI_BASE_URL: https://<eu-endpunkt>/v1
-KI_API_KEY: <key>
-KI_MODELL: <modell>
-KI_ANBIETER_NAMEN: <im Dialog genannter Anbietername>
-```
+   ```yaml
+   KI_PROVIDER: openai-compatible
+   KI_BASE_URL: https://<eu-endpunkt>/v1
+   KI_API_KEY: <key>
+   KI_MODELL: <modell>
+   KI_ANBIETER_NAMEN: <im Dialog genannter Anbietername>
+   ```
+
+2. **Pro Kunde** — im Adminbereich auf der Kundenseite „KI-Aufbereitung für
+   diesen Kunden anbieten" aktivieren (`Tenant.kiAktiviert`).
+
+Erst wenn beides gesetzt ist, erscheint der Einwilligungsschalter im Formular.
+Die Einwilligung bleibt trotzdem pro Use Case (Konzept 4.6).
 
 Ändern sich Anbieter oder Hinweistext, muss `KI_HINWEIS_VERSION` in
 `src/lib/ki.ts` hochgezählt werden — alte Einwilligungen gelten dann nicht weiter.

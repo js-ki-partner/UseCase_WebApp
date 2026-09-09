@@ -57,7 +57,7 @@ export default async function TenantPage({
       <KurzerfassungForm
         action={action}
         modus="neu"
-        kiVerfuegbar={kiKonfiguriert()}
+        kiVerfuegbar={kiKonfiguriert() && ctx.kiAktiviert}
       />
     </EinreicherChrome>
   );

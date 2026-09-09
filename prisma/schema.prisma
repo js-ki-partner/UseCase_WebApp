@@ -54,6 +54,11 @@ model Tenant {
   // Zeigt dem Kunden den realistischen Bewertungswert ab Reifegrad BEWERTET
   // (Konzept, Offene Entscheidung 2). Standard aus.
   zeigtBewertung       Boolean  @default(false)
+  // Bietet dieser Kunde die KI-Aufbereitung überhaupt an? (Konzept 4.6:
+  // pro Kunde freischalten, wenn er danach fragt). Die Einwilligung bleibt
+  // trotzdem pro Use Case. Standard aus. Wirkt nur, wenn zusätzlich ein
+  // KI-Anbieter global konfiguriert ist (KI_PROVIDER).
+  kiAktiviert          Boolean  @default(false)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 

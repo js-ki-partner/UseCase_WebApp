@@ -18,6 +18,7 @@ function toTenantContext(t: {
   brandingAccentColor: string | null;
   stundensatzDefault: number;
   zeigtBewertung: boolean;
+  kiAktiviert: boolean;
 }): TenantContext {
   return {
     id: t.id,
@@ -27,6 +28,7 @@ function toTenantContext(t: {
     brandingAccentColor: t.brandingAccentColor,
     stundensatzDefault: t.stundensatzDefault,
     zeigtBewertung: t.zeigtBewertung,
+    kiAktiviert: t.kiAktiviert,
   };
 }
 
