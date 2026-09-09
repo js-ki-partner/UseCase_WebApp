@@ -16,7 +16,10 @@ export default async function UebersichtPage({
 
   const useCases = await prisma.useCase.findMany({
     where: { tenantId: ctx.id, status: { notIn: ["DUPLIKAT"] } },
-    include: { assessment: { select: { wertReal: true } } },
+    include: {
+      assessment: { select: { wertReal: true } },
+      _count: { select: { processSteps: true } },
+    },
     orderBy: [{ stundenpotenzialPa: "desc" }, { createdAt: "desc" }],
   });
 
@@ -93,6 +96,17 @@ export default async function UebersichtPage({
                   </span>
                 </p>
               )}
+            <p className="mt-2 text-sm">
+              <Link
+                href={`/${slug}/prozess/${uc.id}`}
+                className="accent-text underline"
+              >
+                {uc._count.processSteps > 0
+                  ? `Prozessschritte bearbeiten (${uc._count.processSteps})`
+                  : "Prozessschritte erfassen"}
+              </Link>{" "}
+              <span className="text-gray-400">→</span>
+            </p>
           </div>
         ))}
         {useCases.length === 0 && (

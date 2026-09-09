@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "./prisma";
 import { getKontaktSession } from "./session";
 import { verifyToken } from "./tokens";
-import type { TenantContext } from "./tenant";
+import { setTenantSession, type TenantContext } from "./tenant";
 
 export interface KontaktContext {
   kontaktId: string;
@@ -58,6 +58,11 @@ export async function establishKontaktZugang(
   session.tenantId = treffer.tenantId;
   session.slug = treffer.tenant.slug;
   await session.save();
+
+  // Ansprechpartner erhält zusätzlich die Einreicher-Session desselben Hauses,
+  // damit er aus dem Dashboard heraus Prozessschritte erfassen / Use Cases
+  // einreichen kann (Konzept Abschnitt 3).
+  await setTenantSession(treffer.tenantId, treffer.tenant.slug);
 
   await prisma.tenantKontakt.update({
     where: { id: treffer.id },

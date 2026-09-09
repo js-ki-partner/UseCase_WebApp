@@ -215,7 +215,8 @@ Zentrale Zugriffsschicht: **jede** DB-Abfrage im Einreicher-Kontext geht durch e
 - [x] S17.1 `TenantKontakt`-Modell (Migration `tenant_kontakt`), `UseCase.kundenkontext`.
 - [x] S17.2 Admin: Abschnitt „Ansprechpartner (Dashboard-Zugang)" auf der Kundenseite — anlegen (Name, E-Mail), persönlichen Link erzeugen/erneuern/widerrufen/löschen, Link optional direkt per E-Mail.
 - [x] S17.3 `/k/[token]` → Kontakt-Session (`ucradar_kontakt`, 12 h) → `/[tenant]/dashboard`.
-- [x] S17.4 `/[tenant]/dashboard` (`requireKontakt`): Portfolio mit Kennzahlen, Fortschritts-Trichter (Eingegangen → Umgesetzt), je Use Case „Kontext ergänzen" (`speichereKontext`). Kontext erscheint im Admin-Detail (amber-Kasten).
+- [x] S17.4 `/[tenant]/dashboard` (`requireKontakt`): Portfolio mit Kennzahlen, Fortschritts-Trichter (Eingegangen → Umgesetzt), je Use Case „Kontext ergänzen" (`speichereKontext`) und Link „Prozessschritte erfassen/bearbeiten". Kontext erscheint im Admin-Detail (amber-Kasten).
+- [x] S17.5 `establishKontaktZugang` setzt zusätzlich die Einreicher-Session, damit der Ansprechpartner aus Dashboard/Übersicht heraus Prozessschritte erfassen und Use Cases einreichen kann. Prozess-Link jetzt auch in `/[tenant]/uebersicht`.
 
 ### Noch offen (Ausbaustufe 3/4)
 
