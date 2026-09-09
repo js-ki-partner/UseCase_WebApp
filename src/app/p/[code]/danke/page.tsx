@@ -19,7 +19,7 @@ export default async function PrioDankePage({ params }: PageProps<"/p/[code]/dan
         wird im Workshop gemeinsam angesehen.
       </p>
       <p className="mt-8 flex items-center gap-2 text-xs text-gray-500">
-        bereitgestellt von <KiPartnerLogo className="h-5 w-auto text-gray-700" />
+        bereitgestellt von <KiPartnerLogo className="h-6 w-auto" />
       </p>
     </main>
   );

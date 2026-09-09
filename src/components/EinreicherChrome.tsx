@@ -43,7 +43,7 @@ export function EinreicherChrome({
       <footer className="border-t border-gray-200 bg-white">
         <div className="mx-auto flex max-w-2xl items-center gap-2 px-6 py-4 text-xs text-gray-500">
           <span>Use-Case-Erfassung — bereitgestellt von</span>
-          <KiPartnerLogo className="h-5 w-auto text-gray-700" />
+          <KiPartnerLogo className="h-6 w-auto" />
         </div>
       </footer>
     </div>
