@@ -51,6 +51,7 @@ Stand: 8. September 2026. `[x]` erfüllt und geprüft · `[~]` erfüllt, Prüfun
 - [x] Einwilligungsstatus Bool → dreiwertige Liste.
 - [x] Realer Sync gegen `openproject.ki-partner.tech` (Projekt „Use Cases – ValuePropDemo"): WP #45/#46 angelegt + idempotent aktualisiert, alle Custom Fields verifiziert.
 - [x] Status-Rücklesen (`/api/jobs/op-status` + Admin-Buttons) und vereinfachte Fortschrittsanzeige beim Kunden auf der Magic-Link-Seite („Eingegangen" / „In Prüfung" / …).
+- [x] Bewertungsblock (Stufe 2): K.-o.-Fragen + Wertkorridor im Admin, `reifegrad = BEWERTET`, Sync CF9–CF14 nach OpenProject, Tenant-Schalter für Kundensichtbarkeit.
 
 ## Mandantentrennung & Betrieb
 

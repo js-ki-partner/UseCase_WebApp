@@ -168,13 +168,14 @@ Zentrale Zugriffsschicht: **jede** DB-Abfrage im Einreicher-Kontext geht durch e
 - [x] S10.5 OpenProject-Sync übernimmt die Schritt-Tabelle in die Beschreibung und aggregiert die Systeme in `betroffene_systeme` — real an WP #46 verifiziert.
 - [x] S10.6 Browser-E2E (Puppeteer, manuell): Editor ausfüllen → speichern → DB korrekt inkl. Umlauten.
 
-### Phase 11 — Bewertungsblock im Adminbereich (Konzept 4.4) — offen
+### Phase 11 — Bewertungsblock im Adminbereich (Konzept 4.4)
 
-- [ ] S11.1 `Assessment`-Formular im Admin: Wertkorridor (min/real/max), Konfidenz, Datenlage, Fehlerkosten, Owner beim Kunden, interne Notiz.
-- [ ] S11.2 Vier K.-o.-Fragen vor der Bewertung; Durchfaller → `WARTELISTE` mit Begründung.
-- [ ] S11.3 Euro-Wert-Korridor aus Stundenpotenzial × Automatisierungsgrad-Korridor × Stundensatz (nie Punktschätzung).
-- [ ] S11.4 `reifegrad = BEWERTET`; Sichtbarkeit für Kunden erst ab hier, nur realistischer Wert (Offene Entscheidung 2).
-- [ ] S11.5 Sync der Bewertungsfelder nach OpenProject (CF9–CF14, bereits im Mapping) — Code in `baueWorkPackageFelder` vorhanden, ungetestet.
+- [x] S11.1 `BewertungForm` auf der Admin-Detailseite: Wertkorridor (pessimistisch/realistisch/optimistisch), Konfidenz, Datenlage, Fehlerkosten, Owner beim Kunden, interne Notiz. `speichereBewertung` upsertet `Assessment` (`bewertetVon`/`bewertetAm`).
+- [x] S11.2 Vier K.-o.-Fragen (Ja/Nein) vor dem Wertkorridor; ein „nein" ohne Begründung wird abgelehnt, mit Begründung → `status = WARTELISTE`.
+- [x] S11.3 `src/lib/bewertung.ts` — Euro-Korridor aus Stundenpotenzial × Automatisierungsgrad (40/55/70 %) × Stundensatz, als Vorschlag vorbefüllt. Unit-getestet.
+- [x] S11.4 `reifegrad = BEWERTET` wenn K.-o. bestanden + Werte gesetzt. Tenant-Schalter `zeigtBewertung`; realistischer Wert erscheint dann auf der Magic-Link-Seite.
+- [x] S11.5 Sync CF9–CF14 nach OpenProject — real an WP #45 verifiziert (wert_min/real/max als Zahl, konfidenz/datenlage/fehlerkosten als custom_option-Link).
+- [x] S11.6 Eingangskorb: Spalte „Wert real".
 
 ### Phase 12 — KI-Anreicherung + Einwilligung (Konzept 4.6) — offen
 

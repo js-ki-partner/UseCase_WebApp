@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireTenant } from "@/lib/tenant";
 import { EinreicherChrome } from "@/components/EinreicherChrome";
 import { kundenFortschritt } from "@/lib/openproject";
+import { formatEuro } from "@/lib/bewertung";
 import { KurzerfassungForm } from "../../KurzerfassungForm";
 import { ergaenzeKurzerfassung, type FormState } from "../../actions";
 
@@ -17,9 +18,17 @@ export default async function BearbeitenPage({
 
   const useCase = await prisma.useCase.findUnique({
     where: { id },
-    include: { _count: { select: { processSteps: true } } },
+    include: {
+      _count: { select: { processSteps: true } },
+      assessment: { select: { wertReal: true } },
+    },
   });
   if (!useCase || useCase.tenantId !== ctx.id) notFound();
+
+  const zeigtWert =
+    ctx.zeigtBewertung &&
+    useCase.reifegrad === "BEWERTET" &&
+    useCase.assessment?.wertReal != null;
 
   const action = ergaenzeKurzerfassung.bind(null, useCase.id, slug) as (
     prev: FormState,
@@ -36,12 +45,24 @@ export default async function BearbeitenPage({
         </p>
       </header>
 
-      {useCase.openprojectWpId && (
+      {(useCase.openprojectWpId || zeigtWert) && (
         <div className="accent-border mb-8 rounded-md border-l-4 bg-white px-4 py-3">
-          <p className="text-sm text-gray-600">Aktueller Stand</p>
-          <p className="text-lg font-semibold">
-            {kundenFortschritt(useCase.openprojectStatusKey)}
-          </p>
+          {useCase.openprojectWpId && (
+            <>
+              <p className="text-sm text-gray-600">Aktueller Stand</p>
+              <p className="text-lg font-semibold">
+                {kundenFortschritt(useCase.openprojectStatusKey)}
+              </p>
+            </>
+          )}
+          {zeigtWert && (
+            <p className="mt-1 text-sm text-gray-600">
+              Geschätzter jährlicher Wert (Richtwert):{" "}
+              <span className="font-semibold text-gray-900">
+                {formatEuro(useCase.assessment!.wertReal)}
+              </span>
+            </p>
+          )}
         </div>
       )}
 

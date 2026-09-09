@@ -10,10 +10,12 @@ import {
 } from "@/lib/format";
 import { berechnePotenzial, type Frequenz } from "@/lib/potential";
 import { kundenFortschritt } from "@/lib/openproject";
+import { berechneWertkorridor, type KoKriterien } from "@/lib/bewertung";
 import { env } from "@/lib/env";
 import { EditForm } from "./EditForm";
 import { OpenProjectAktionen } from "./OpenProjectAktionen";
 import { DuplikatForm } from "./DuplikatForm";
+import { BewertungForm } from "./BewertungForm";
 
 export const dynamic = "force-dynamic";
 
@@ -29,9 +31,15 @@ export default async function UcDetailPage({ params }: PageProps<"/admin/uc/[id]
       duplikatVon: true,
       duplikate: true,
       magicLinks: true,
+      assessment: true,
     },
   });
   if (!uc) notFound();
+
+  const wertVorschlag = berechneWertkorridor(
+    uc.stundenpotenzialPa,
+    uc.tenant.stundensatzDefault,
+  );
 
   const potenzial = berechnePotenzial({
     frequenz: uc.frequenz as Frequenz,
@@ -141,6 +149,35 @@ export default async function UcDetailPage({ params }: PageProps<"/admin/uc/[id]
             </div>
           </section>
         )}
+
+        <section className="mt-8 rounded-md border border-gray-200 bg-white p-4">
+          <h2 className="mb-1 font-medium">Bewertung (nur KI Partner)</h2>
+          <p className="mb-4 text-xs text-gray-500">
+            Erst die vier K.-o.-Fragen, dann der Wertkorridor. Bei einem »nein«
+            wandert der Use Case mit Begründung in die Warteliste.
+          </p>
+          <BewertungForm
+            useCaseId={uc.id}
+            vorschlag={wertVorschlag}
+            werte={
+              uc.assessment
+                ? {
+                    wertMin: uc.assessment.wertMin,
+                    wertReal: uc.assessment.wertReal,
+                    wertMax: uc.assessment.wertMax,
+                    konfidenz: uc.assessment.konfidenz,
+                    datenlage: uc.assessment.datenlage,
+                    fehlerkosten: uc.assessment.fehlerkosten,
+                    ownerBeimKunden: uc.assessment.ownerBeimKunden,
+                    notizIntern: uc.assessment.notizIntern,
+                    koKriterien:
+                      (uc.assessment.koKriterien as KoKriterien | null) ?? null,
+                    bewertetVon: uc.assessment.bewertetVon,
+                  }
+                : null
+            }
+          />
+        </section>
 
         <section className="mt-8">
           <h2 className="font-medium">Einreicher</h2>

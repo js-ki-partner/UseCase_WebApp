@@ -51,6 +51,9 @@ model Tenant {
   brandingLogoUrl      String?
   brandingAccentColor  String? // Hex, z. B. #1d4ed8
   stundensatzDefault   Int      @default(80) // EUR pro Stunde
+  // Zeigt dem Kunden den realistischen Bewertungswert ab Reifegrad BEWERTET
+  // (Konzept, Offene Entscheidung 2). Standard aus.
+  zeigtBewertung       Boolean  @default(false)
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
 

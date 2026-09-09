@@ -10,6 +10,7 @@ export interface TenantContext {
   brandingLogoUrl: string | null;
   brandingAccentColor: string | null;
   stundensatzDefault: number;
+  zeigtBewertung: boolean;
 }
 
 type TenantRow = {
@@ -19,6 +20,7 @@ type TenantRow = {
   brandingLogoUrl: string | null;
   brandingAccentColor: string | null;
   stundensatzDefault: number;
+  zeigtBewertung: boolean;
 };
 
 function toContext(t: TenantRow): TenantContext {
@@ -29,6 +31,7 @@ function toContext(t: TenantRow): TenantContext {
     brandingLogoUrl: t.brandingLogoUrl,
     brandingAccentColor: t.brandingAccentColor,
     stundensatzDefault: t.stundensatzDefault,
+    zeigtBewertung: t.zeigtBewertung,
   };
 }
 

@@ -52,6 +52,7 @@ export default async function TenantDetailPage({
             stundensatzDefault: tenant.stundensatzDefault,
             brandingLogoUrl: tenant.brandingLogoUrl ?? "",
             brandingAccentColor: tenant.brandingAccentColor ?? "",
+            zeigtBewertung: tenant.zeigtBewertung,
           }}
         />
       </section>

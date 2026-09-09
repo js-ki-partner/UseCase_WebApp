@@ -24,6 +24,7 @@ interface Werte {
   stundensatzDefault?: number;
   brandingLogoUrl?: string;
   brandingAccentColor?: string;
+  zeigtBewertung?: boolean;
 }
 
 function Submit({ label }: { label: string }) {
@@ -212,6 +213,19 @@ export function TenantForm({
           <F text={ff.brandingAccentColor} />
         </label>
       </div>
+
+      <label className="flex items-start gap-2 text-sm">
+        <input
+          type="checkbox"
+          name="zeigtBewertung"
+          defaultChecked={werte.zeigtBewertung}
+          className="mt-0.5"
+        />
+        <span>
+          Realistischen Bewertungswert für den Kunden sichtbar machen (ab
+          Reifegrad »Bewertet«). Standard: aus.
+        </span>
+      </label>
 
       {modus === "neu" && (
         <fieldset className="rounded-md border border-gray-200 bg-gray-50 p-3">

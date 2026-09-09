@@ -31,7 +31,11 @@ export default async function EingangskorbPage({
       ...(status !== "ALLE" ? { status: status as never } : {}),
       ...(tenantSlug ? { tenant: { slug: tenantSlug } } : {}),
     },
-    include: { tenant: true, _count: { select: { duplikate: true } } },
+    include: {
+      tenant: true,
+      assessment: { select: { wertReal: true } },
+      _count: { select: { duplikate: true } },
+    },
     orderBy: [{ stundenpotenzialPa: "desc" }, { createdAt: "desc" }],
   });
 
@@ -85,6 +89,7 @@ export default async function EingangskorbPage({
               <th className="px-3 py-2">Rolle</th>
               <th className="px-3 py-2">Frequenz</th>
               <th className="px-3 py-2 text-right">h/Jahr</th>
+              <th className="px-3 py-2 text-right">Wert real</th>
               <th className="px-3 py-2">Status (App)</th>
               <th className="px-3 py-2">OpenProject</th>
               <th className="px-3 py-2">Eingang</th>
@@ -109,6 +114,11 @@ export default async function EingangskorbPage({
                 <td className="px-3 py-2 text-right font-medium">
                   {uc.stundenpotenzialPa.toLocaleString("de-DE")}
                 </td>
+                <td className="px-3 py-2 text-right">
+                  {uc.assessment?.wertReal != null
+                    ? `${uc.assessment.wertReal.toLocaleString("de-DE")} €`
+                    : "—"}
+                </td>
                 <td className="px-3 py-2">{statusLabel(uc.status)}</td>
                 <td className="px-3 py-2 text-gray-600">
                   {uc.openprojectStatusName ??
@@ -119,7 +129,7 @@ export default async function EingangskorbPage({
             ))}
             {useCases.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-3 py-8 text-center text-gray-500">
+                <td colSpan={9} className="px-3 py-8 text-center text-gray-500">
                   Keine Einträge für diese Auswahl.
                 </td>
               </tr>

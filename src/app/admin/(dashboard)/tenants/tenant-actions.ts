@@ -78,6 +78,7 @@ export async function erstelleTenant(
       stundensatzDefault: parsed.data.stundensatzDefault,
       brandingLogoUrl: parsed.data.brandingLogoUrl ?? null,
       brandingAccentColor: parsed.data.brandingAccentColor ?? null,
+      zeigtBewertung: formData.get("zeigtBewertung") === "on",
     },
   });
   await audit({
@@ -141,10 +142,11 @@ export async function aktualisiereTenant(
       stundensatzDefault: parsed.data.stundensatzDefault,
       brandingLogoUrl: parsed.data.brandingLogoUrl ?? null,
       brandingAccentColor: parsed.data.brandingAccentColor ?? null,
+      zeigtBewertung: formData.get("zeigtBewertung") === "on",
     },
   });
   revalidatePath(`/admin/tenants/${tenantId}`);
-  return { hinweis: "Gespeichert." };
+  return { ok: true, hinweis: "Gespeichert." };
 }
 
 /** Neues Zugangstoken erzeugen. Klartext wird einmalig zurueckgegeben. */
