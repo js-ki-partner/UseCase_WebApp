@@ -35,15 +35,28 @@ fi
 if [ ! -f secrets.enc.yaml ]; then
   TMP="$(mktemp)"; trap 'shred -u "$TMP" 2>/dev/null || rm -f "$TMP"' EXIT
   PG_PW="$(openssl rand -base64 24 | tr -dc 'A-Za-z0-9' | head -c 32)"
+
+  # Die beiden echten Secrets: aus der Umgebung oder interaktiv abfragen.
+  # Nichts davon wird ausgegeben oder in die History geschrieben.
+  OP_KEY="${OP_API_KEY:-}"
+  while [ -z "$OP_KEY" ]; do
+    read -r -s -p "OpenProject OP_API_KEY (Eingabe verborgen): " OP_KEY; echo
+  done
+  SMTP="${SMTP_URL:-}"
+  while [ -z "$SMTP" ]; do
+    read -r -p "SMTP_URL (z. B. smtps://user:pass@mail.host:465): " SMTP
+  done
+
+  umask 077
   cat > "$TMP" <<EOF
 DATABASE_URL: postgresql://ucradar:${PG_PW}@db:5432/ucradar?schema=public
 APP_BASE_URL: https://ideen.ki-partner.tech
 SESSION_SECRET: $(openssl rand -base64 36)
 TOKEN_HASH_SECRET: $(openssl rand -base64 36)
 OP_BASE_URL: https://openproject.ki-partner.tech
-OP_API_KEY: BITTE-EINTRAGEN
+OP_API_KEY: ${OP_KEY}
 OP_MAPPING_FILE: ./openproject-mapping.json
-SMTP_URL: BITTE-EINTRAGEN
+SMTP_URL: ${SMTP}
 MAIL_FROM: UC-Radar <ideen@ki-partner.tech>
 JOB_TOKEN: $(openssl rand -hex 24)
 KI_PROVIDER: ""
@@ -55,11 +68,11 @@ POSTGRES_USER: ucradar
 POSTGRES_PASSWORD: ${PG_PW}
 POSTGRES_DB: ucradar
 EOF
+  unset OP_KEY SMTP
   $SOPS --encrypt --input-type yaml --output-type yaml "$TMP" > secrets.enc.yaml
   sudo chown "$USER:$(id -gn)" secrets.enc.yaml .sops.yaml
-  echo "==> secrets.enc.yaml erstellt. Editor oeffnet: OP_API_KEY und SMTP_URL eintragen, speichern."
-  $SOPS secrets.enc.yaml
-  sudo chown "$USER:$(id -gn)" secrets.enc.yaml
+  echo "==> secrets.enc.yaml erstellt (verschluesselt). Aendern spaeter mit:"
+  echo "    SOPS_AGE_KEY_FILE=/etc/sops/age-key.txt sudo /usr/local/bin/sops secrets.enc.yaml"
 fi
 
 if $SOPS -d --output-type dotenv secrets.enc.yaml | grep -q 'BITTE-EINTRAGEN'; then

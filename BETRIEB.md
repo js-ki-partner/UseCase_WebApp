@@ -68,9 +68,10 @@ git clone https://github.com/js-ki-partner/UseCase_WebApp.git .
 
 `first-deploy.sh` erzeugt `.sops.yaml` (mit dem bekannten age-Public-Key des
 Servers) und `secrets.enc.yaml` (Zufallswerte für `SESSION_SECRET`,
-`TOKEN_HASH_SECRET`, `JOB_TOKEN`, `POSTGRES_PASSWORD` werden generiert), öffnet
-`sops` für die beiden Werte, die du selbst einträgst (`OP_API_KEY`, `SMTP_URL`),
-baut, migriert und startet. Der Entrypoint führt `prisma migrate deploy` aus.
+`TOKEN_HASH_SECRET`, `JOB_TOKEN`, `POSTGRES_PASSWORD` werden generiert), fragt
+`OP_API_KEY` (verborgen) und `SMTP_URL` interaktiv ab — alternativ vorher als
+Umgebungsvariablen setzen —, baut, migriert und startet. Der Entrypoint führt
+`prisma migrate deploy` aus.
 
 Danach:
 
