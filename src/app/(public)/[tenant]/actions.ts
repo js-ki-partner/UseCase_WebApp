@@ -119,11 +119,12 @@ export async function submitKurzerfassung(
   }
 
   if (d.einreicherEmail && !d.istAnonym) {
-    try {
-      await sendeMagicLink(useCase.id, d.einreicherEmail);
-    } catch (e) {
-      console.error("Magic-Link-Versand fehlgeschlagen:", e);
-    }
+    // Nicht auf den SMTP-Versand warten — ein langsamer Mailserver darf die
+    // Einreichung nicht blockieren. Fehler landen im Log (mailer.ts hat ein
+    // eigenes Timeout).
+    void sendeMagicLink(useCase.id, d.einreicherEmail).catch((e) =>
+      console.error("Magic-Link-Versand fehlgeschlagen:", e),
+    );
   }
 
   await audit({

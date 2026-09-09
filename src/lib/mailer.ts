@@ -9,6 +9,43 @@ export interface Mail {
   text: string;
 }
 
+// Harte Obergrenze, damit ein langsamer/falsch konfigurierter SMTP-Server nie
+// eine Server Action blockiert (z. B. die Kurzerfassung). nodemailer bekommt
+// zusaetzlich eigene, kuerzere Timeouts.
+const VERSAND_TIMEOUT_MS = 15_000;
+
+interface SmtpOptions {
+  host: string;
+  port: number;
+  secure: boolean;
+  auth?: { user: string; pass: string };
+  connectionTimeout: number;
+  greetingTimeout: number;
+  socketTimeout: number;
+}
+
+/** SMTP_URL (smtp://user:pass@host:port bzw. smtps://…) in nodemailer-Optionen. */
+function parseSmtpUrl(smtpUrl: string): SmtpOptions {
+  const u = new URL(smtpUrl);
+  const port = u.port ? Number(u.port) : u.protocol === "smtps:" ? 465 : 587;
+  // Port 465 ist implizit TLS — haeufige Fehlkonfiguration: smtp:// statt smtps://
+  const secure = u.protocol === "smtps:" || port === 465;
+  return {
+    host: u.hostname,
+    port,
+    secure,
+    auth: u.username
+      ? {
+          user: decodeURIComponent(u.username),
+          pass: decodeURIComponent(u.password),
+        }
+      : undefined,
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 12_000,
+  };
+}
+
 export async function sendeMail(mail: Mail): Promise<void> {
   const { smtpUrl, from } = env.mail();
 
@@ -19,7 +56,7 @@ export async function sendeMail(mail: Mail): Promise<void> {
     return;
   }
 
-  // nodemailer ist eine optionale Laufzeit-Abhaengigkeit (nur wenn SMTP genutzt wird).
+  // nodemailer ist eine Laufzeit-Abhaengigkeit (nur wenn SMTP genutzt wird).
   const mod = await import(
     /* webpackIgnore: true */ "nodemailer" as string
   ).catch(() => null);
@@ -29,10 +66,26 @@ export async function sendeMail(mail: Mail): Promise<void> {
     );
   }
   const nodemailer = (mod.default ?? mod) as {
-    createTransport: (url: string) => {
+    createTransport: (opts: SmtpOptions) => {
       sendMail: (opts: Record<string, unknown>) => Promise<unknown>;
+      close: () => void;
     };
   };
-  const transport = nodemailer.createTransport(smtpUrl);
-  await transport.sendMail({ from, to: mail.to, subject: mail.subject, text: mail.text });
+
+  const transport = nodemailer.createTransport(parseSmtpUrl(smtpUrl));
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      transport.sendMail({ from, to: mail.to, subject: mail.subject, text: mail.text }),
+      new Promise((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error(`Mailversand-Timeout nach ${VERSAND_TIMEOUT_MS} ms`)),
+          VERSAND_TIMEOUT_MS,
+        );
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+    transport.close();
+  }
 }
