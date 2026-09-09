@@ -213,6 +213,13 @@ export default async function UcDetailPage({ params }: PageProps<"/admin/uc/[id]
           />
         </section>
 
+        {uc.kundenkontext && (
+          <section className="mt-6 rounded-md border border-amber-200 bg-amber-50 p-4">
+            <h2 className="font-medium">Kontext vom Ansprechpartner</h2>
+            <p className="mt-1 whitespace-pre-wrap text-sm">{uc.kundenkontext}</p>
+          </section>
+        )}
+
         <section className="mt-8">
           <h2 className="font-medium">Einreicher</h2>
           <p className="mt-1 text-sm">

@@ -209,10 +209,17 @@ Zentrale Zugriffsschicht: **jede** DB-Abfrage im Einreicher-Kontext geht durch e
 
 - [x] Bereits umgesetzt: Logo, Akzentfarbe, „bereitgestellt von KI Partner" auf allen Einreicher- und Teilnehmer-Seiten (`EinreicherChrome`, `KiPartnerLogo`).
 
+### Phase 17 — Kunden-Dashboard mit Ansprechpartner-Zugang (Konzept Abschnitt 3)
+
+- [x] S17.1 `TenantKontakt`-Modell (Migration `tenant_kontakt`), `UseCase.kundenkontext`.
+- [x] S17.2 Admin: Abschnitt „Ansprechpartner (Dashboard-Zugang)" auf der Kundenseite — anlegen (Name, E-Mail), persönlichen Link erzeugen/erneuern/widerrufen/löschen, Link optional direkt per E-Mail.
+- [x] S17.3 `/k/[token]` → Kontakt-Session (`ucradar_kontakt`, 12 h) → `/[tenant]/dashboard`.
+- [x] S17.4 `/[tenant]/dashboard` (`requireKontakt`): Portfolio mit Kennzahlen, Fortschritts-Trichter (Eingegangen → Umgesetzt), je Use Case „Kontext ergänzen" (`speichereKontext`). Kontext erscheint im Admin-Detail (amber-Kasten).
+
 ### Noch offen (Ausbaustufe 3/4)
 
-- [ ] Kunden-Dashboard mit echtem Ansprechpartner-Zugang (Magic Link statt geteiltem Token).
 - [ ] Ausbaustufe 4: mehrere Betreuer im Adminbereich, Vorlagenbibliothek, anonymisierter Benchmark über Kunden.
+- [ ] Hardening: RLS (S7.2), CSRF über Origin-Check hinaus (S7.4), Playwright-E2E (S9.3), SOPS-Secret-Datei.
 
 ---
 

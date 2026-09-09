@@ -47,3 +47,26 @@ const tenantSessionOptions = (): SessionOptions => ({
 export async function getTenantSession() {
   return getIronSession<TenantSession>(await cookies(), tenantSessionOptions());
 }
+
+// --- Ansprechpartner beim Kunden (Konzept Abschnitt 3): persönlicher Zugang ---
+export interface KontaktSession {
+  kontaktId?: string;
+  tenantId?: string;
+  slug?: string;
+}
+
+const kontaktSessionOptions = (): SessionOptions => ({
+  password: env.sessionSecret(),
+  cookieName: "ucradar_kontakt",
+  cookieOptions: {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 12,
+  },
+});
+
+export async function getKontaktSession() {
+  return getIronSession<KontaktSession>(await cookies(), kontaktSessionOptions());
+}

@@ -3,10 +3,11 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { env } from "@/lib/env";
-import { formatDatum } from "@/lib/format";
+import { formatDatum, formatDatumZeit } from "@/lib/format";
 import { listeProjekte } from "@/lib/openproject";
 import { TenantForm } from "../TenantForm";
 import { TokenPanel } from "./TokenPanel";
+import { KontaktPanel } from "./KontaktPanel";
 import { aktualisiereTenant } from "../tenant-actions";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +17,10 @@ export default async function TenantDetailPage({
 }: PageProps<"/admin/tenants/[id]">) {
   await requireAdmin();
   const { id } = await params;
-  const tenant = await prisma.tenant.findUnique({ where: { id } });
+  const tenant = await prisma.tenant.findUnique({
+    where: { id },
+    include: { kontakte: { orderBy: { createdAt: "asc" } } },
+  });
   if (!tenant) notFound();
 
   const projekte = await listeProjekte();
@@ -58,13 +62,37 @@ export default async function TenantDetailPage({
       </section>
 
       <section className="rounded-md border border-gray-200 bg-white p-4">
-        <h2 className="mb-3 font-medium">Zugangstoken</h2>
+        <h2 className="mb-1 font-medium">Zugangstoken (Einreicher)</h2>
+        <p className="mb-3 text-sm text-gray-500">
+          Geteilter Link, den der Kunde intern verteilt.
+        </p>
         <TokenPanel
           tenantId={tenant.id}
           slug={tenant.slug}
           hatToken={Boolean(tenant.accessTokenHash)}
           gueltigBis={formatDatum(tenant.tokenExpiresAt)}
           appBaseUrl={env.appBaseUrl()}
+        />
+      </section>
+
+      <section className="rounded-md border border-gray-200 bg-white p-4">
+        <h2 className="mb-1 font-medium">Ansprechpartner (Dashboard-Zugang)</h2>
+        <p className="mb-3 text-sm text-gray-500">
+          Persönlicher Link zum Portfolio-Dashboard des Hauses (Konzept
+          Abschnitt 3).
+        </p>
+        <KontaktPanel
+          tenantId={tenant.id}
+          kontakte={tenant.kontakte.map((k) => ({
+            id: k.id,
+            name: k.name,
+            email: k.email,
+            hatZugang: Boolean(k.zugangTokenHash),
+            gueltigBis: formatDatum(k.tokenExpiresAt),
+            letzterLogin: k.letzterLoginAm
+              ? formatDatumZeit(k.letzterLoginAm)
+              : "—",
+          }))}
         />
       </section>
     </div>

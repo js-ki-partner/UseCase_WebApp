@@ -54,6 +54,8 @@ Stand: 8. September 2026. `[x]` erfüllt und geprüft · `[~]` erfüllt, Prüfun
 - [x] Bewertungsblock (Stufe 2): K.-o.-Fragen + Wertkorridor im Admin, `reifegrad = BEWERTET`, Sync CF9–CF14 nach OpenProject, Tenant-Schalter für Kundensichtbarkeit.
 - [x] Portfolio-CSV-Export (`/admin/export/portfolio`, 26 Spalten, Excel/UTF-8-BOM, respektiert Filter).
 - [x] KI-Anreicherung (Stufe 2, Konzept 4.6): zweistufige Einwilligung mit Versionskennung, serverseitige Filterschicht, `AiTransferLog`, Anbieter-Abstraktion (`mock` getestet), lokale Ähnlichkeitsprüfung, Widerruf, Admin-Review-Panel. **Standardmäßig aus** — Produktivanbieter (EU-Endpunkt/AV-Vertrag) noch zu wählen.
+- [x] Kunden-Portfolio-Sicht `/[tenant]/uebersicht` (Token) und **Priorisierungsmodus** (`/admin/prio`, `/p/[code]`) für Workshops.
+- [x] **Kunden-Dashboard** `/[tenant]/dashboard` mit persönlichem Ansprechpartner-Zugang (`/k/[token]`, Konzept Abschnitt 3): Portfolio + Fortschritts-Trichter + „Kontext ergänzen".
 
 ## Mandantentrennung & Betrieb
 
